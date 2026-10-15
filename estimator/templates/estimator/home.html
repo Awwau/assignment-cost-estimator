@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Cost Estimator</title>
+</head>
+
+<body>
+    <header>
+        <h1>Assignment Cost Estimator</h1>
+        <p>
+            Estimate the cost of international employee assignments.
+        </p>
+    </header>
+
+    <main>
+        <nav aria-label="Estimator sections">
+            <a href="#cost-estimate">Cost Estimate</a>
+            <a href="#immigration">Immigration</a>
+        </nav>
+
+        <section id="cost-estimate">
+            <h2>Cost Estimate</h2>
+            <p>
+                Enter the employee's assignment details to calculate the employer's costs.
+            </p>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+
+                {% for field in form %}
+                    <div>
+                        {{ field.label_tag }}
+                        {{ field }}
+
+                        {% if field.errors %}
+                            <div role="alert">
+                                {{ field.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit">Calculate Assignment Cost</button>
+            </form>
+
+            {% if assignment_data %}
+                <h3>Submitted Assignment Details</h3>
+                <table>
+                    <tbody>
+                        {% for key, value in assignment_data.items %}
+                            <tr>
+                                <th scope="row">{{ key }}</th>
+                                <td>{{ value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
+
+        <section id="immigration">
+            <h2>Immigration</h2>
+            <p>
+                View immigration and work permit requirements.
+            </p>
+        </section>
+    </main>
+</body>
+</html>
