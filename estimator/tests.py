@@ -11,6 +11,9 @@ from .services.uk_tax import (
     calculate_tax_gross_up,
 )
 
+from .services.swiss_tax import (
+    calculate_swiss_social_security
+)
 
 class CurrencyConversionTests(SimpleTestCase):
     def test_chf_to_gbp(self):
@@ -58,3 +61,123 @@ class UKTaxTests(SimpleTestCase):
         with self.assertRaises(ValueError):
             calculate_uk_income_tax(-100)
 
+
+class SwissSocialSecurityTests(SimpleTestCase):
+
+    def test_standard_assignment_income(self):
+        result = calculate_swiss_social_security(
+            Decimal("170000")
+        )
+
+        self.assertEqual(
+            result["ahv_iv_eo"],
+            Decimal("9010.000")
+        )
+
+        self.assertEqual(
+            result["alv"],
+            Decimal("1630.200")
+        )
+
+        self.assertEqual(
+            result["total"],
+            Decimal("10640.200")
+        )
+
+    def test_income_below_alv_limit(self):
+        result = calculate_swiss_social_security(
+            Decimal("100000")
+        )
+
+        self.assertEqual(
+            result["total"],
+            Decimal("6400.000")
+        )
+
+    def test_negative_income(self):
+        with self.assertRaises(ValueError):
+            calculate_swiss_social_security(-100)
+
+
+def test_swiss_federal_tax_brackets(self):
+    from decimal import Decimal
+    from estimator.services.swiss_tax import (
+        calculate_progressive_tax,
+        FEDERAL_TAX_BRACKETS_2026,
+    )
+
+    result = calculate_progressive_tax(
+        Decimal("146979"),
+        FEDERAL_TAX_BRACKETS_2026,
+    )
+
+    self.assertEqual(result, Decimal("6743.24"))
+
+
+from decimal import Decimal
+from django.test import SimpleTestCase
+
+from estimator.services.assignment_cost import (
+    calculate_home_pay,
+    calculate_assignment_benefits,
+)
+
+
+class AssignmentCostTests(SimpleTestCase):
+
+    def test_annual_home_pay(self):
+        result = calculate_home_pay(
+            base_salary=150000,
+            bonus=20000,
+            exchange_rate=1.10,
+        )
+
+        self.assertEqual(
+            result["total_home_pay_chf"],
+            Decimal("170000"),
+        )
+
+        self.assertAlmostEqual(
+            result["total_home_pay_gbp"],
+            Decimal("154545.45"),
+            places=2,
+        )
+
+    def test_first_year_benefits(self):
+        result = calculate_assignment_benefits(
+            monthly_housing=3000,
+            relocation_chf=5000,
+            moving_costs=6000,
+            temporary_housing=4000,
+            exchange_rate=1.10,
+            assignment_year=1,
+        )
+
+        self.assertAlmostEqual(
+            result["total"],
+            Decimal("50545.45"),
+            places=2,
+        )
+
+    def test_second_year_benefits(self):
+        result = calculate_assignment_benefits(
+            monthly_housing=3000,
+            relocation_chf=5000,
+            moving_costs=6000,
+            temporary_housing=4000,
+            exchange_rate=1.10,
+            assignment_year=2,
+        )
+
+        self.assertEqual(
+            result["total"],
+            Decimal("36000"),
+        )
+
+    def test_negative_salary_rejected(self):
+        with self.assertRaises(ValueError):
+            calculate_home_pay(
+                base_salary=-1000,
+                bonus=20000,
+                exchange_rate=1.10,
+            )
