@@ -59,6 +59,68 @@
                     </tbody>
                 </table>
             {% endif %}
+
+            {% if results %}
+                <hr>
+                
+                <h2>Assignment Cost Breakdown</h2>
+                
+                <h3>Annual Home Pay</h3>
+                <p>Salary and Bonus: £{{ results.home_pay.total_home_pay_gbp|floatformat:2 }}</p>
+                
+                <h3>Year 1 Benefits</h3>
+                
+                <table>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Housing</th>
+                            <td>£{{ results.year_1_benefits.housing|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Relocation Allowance</th>
+                            <td>£{{ results.year_1_benefits.relocation|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Moving Costs</th>
+                            <td>£{{ results.year_1_benefits.moving_costs|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Temporary Housing</th>
+                            <td>£{{ results.year_1_benefits.temporary_housing|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total Year 1 Benefits</th>
+                            <td>
+                                <strong> £{{ results.year_1_benefits.total|floatformat:2 }} </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Year 2 Benefits</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Housing</th>
+                            <td>£{{ results.year_2_benefits.housing|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total Year 2 Benefits</th>
+                            <td>
+                                <strong>£{{ results.year_2_benefits.total|floatformat:2 }}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p>
+                    <em>
+                        These figures show salary and direct assignment benefits 
+                        before UK taxes, employer charges, and hypothetical Swiss deductions. They are not final employer costs.
+                    </em>
+                </p>
+            {% endif %}
+            
         </section>
 
         <section id="immigration">
