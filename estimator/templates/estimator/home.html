@@ -68,57 +68,258 @@
                 <h3>Annual Home Pay</h3>
                 <p>Salary and Bonus: £{{ results.home_pay.total_home_pay_gbp|floatformat:2 }}</p>
                 
-                <h3>Year 1 Benefits</h3>
+                <h3>Year 1 Benefits and Tax Treatment</h3>
+                <p>
+                    Housing: taxable benefit-in-kind, subject to HMRC valuation rules.
+                    Relocation allowance: taxable cash.
+                    Moving costs and temporary housing: potentially exempt
+                    relocation expenses, subject to eligibility and the
+                    combined £8,000 limit.
+                </p>
+
                 
                 <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Benefit</th>
+                            <th scope="col">Employer Cost</th>
+                            <th scope="col">UK Tax Treatment</th>
+                        </tr>
+                    </thead>
+                    
                     <tbody>
                         <tr>
                             <th scope="row">Housing</th>
                             <td>£{{ results.year_1_benefits.housing|floatformat:2 }}</td>
+                            <td>{{ results.year_1_benefits.tax_treatment.housing }}</td>
                         </tr>
+
                         <tr>
                             <th scope="row">Relocation Allowance</th>
                             <td>£{{ results.year_1_benefits.relocation|floatformat:2 }}</td>
+                            <td>{{ results.year_1_benefits.tax_treatment.relocation }}</td>
                         </tr>
+
                         <tr>
                             <th scope="row">Moving Costs</th>
                             <td>£{{ results.year_1_benefits.moving_costs|floatformat:2 }}</td>
+                            <td>{{ results.year_1_benefits.tax_treatment.moving_costs }}</td>
                         </tr>
+
                         <tr>
                             <th scope="row">Temporary Housing</th>
                             <td>£{{ results.year_1_benefits.temporary_housing|floatformat:2 }}</td>
+                            <td>{{ results.year_1_benefits.tax_treatment.temporary_housing }}</td>
                         </tr>
+
                         <tr>
                             <th scope="row">Total Year 1 Benefits</th>
                             <td>
                                 <strong> £{{ results.year_1_benefits.total|floatformat:2 }} </strong>
                             </td>
+                            <td>Before tax calculations</td>
                         </tr>
                     </tbody>
                 </table>
                 
-                <h3>Year 2 Benefits</h3>
+                <h3>Year 2 Benefits</h3>                
                 <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Benefit</th>
+                            <th scope="col">Employer Cost</th>
+                            <th scope="col">UK Tax Treatment</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr>
                             <th scope="row">Housing</th>
-                            <td>£{{ results.year_2_benefits.housing|floatformat:2 }}</td>
+                            <td>
+                                £{{ results.year_2_benefits.housing|floatformat:2 }}
+                            </td>
+                            <td>
+                                {{ results.year_2_benefits.tax_treatment.housing }}
+                            </td>
                         </tr>
                         <tr>
                             <th scope="row">Total Year 2 Benefits</th>
                             <td>
-                                <strong>£{{ results.year_2_benefits.total|floatformat:2 }}</strong>
+                                <strong>
+                                    £{{ results.year_2_benefits.total|floatformat:2 }}
+                                </strong>
                             </td>
+                            <td>Before tax calculations</td>
                         </tr>
                     </tbody>
                 </table>
-                
+
                 <p>
                     <em>
                         These figures show salary and direct assignment benefits 
                         before UK taxes, employer charges, and hypothetical Swiss deductions. They are not final employer costs.
                     </em>
                 </p>
+
+                
+                <h3>Hypothetical Swiss Social Security</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Deduction</th>
+                            <th scope="col">Annual Amount (CHF)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">AHV/IV/EO</th>
+                            <td>
+                                CHF {{ results.hypothetical_social_security.ahv_iv_eo_chf|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Unemployment Insurance</th>
+                            <td>
+                                CHF {{ results.hypothetical_social_security.alv_chf|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total Hypothetical Social Security</th>
+                            <td>
+                                <strong>
+                                    CHF {{ results.hypothetical_social_security.total_chf|floatformat:2 }}
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    Equivalent annual deduction:
+                    <strong>
+                        £{{ results.hypothetical_social_security.total_gbp|floatformat:2 }}
+                    </strong>
+                </p>
+
+                <p>
+                    <em>
+                        This is a hypothetical employee deduction used for
+                        tax equalisation, not an additional employer expense.
+                        Hypothetical Swiss income tax is not yet included.
+                    </em>
+                </p>
+
+                
+                <h3>Home Pay After Hypothetical Social Security</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Annual Amount (GBP)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Gross Home Pay</td>
+                            <td>
+                                £{{ results.pay_after_social_security.annual_home_pay_gbp|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Less: Hypothetical Swiss Social Security</td>
+                            <td>
+                                -£{{ results.pay_after_social_security.hypothetical_social_security_gbp|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pay After Social Security</strong></td>
+                            <td>
+                                <strong>
+                                    £{{ results.pay_after_social_security.pay_after_social_security_gbp|floatformat:2 }}
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    <em>
+                        This is an intermediate calculation. Hypothetical Swiss
+                        income tax has not yet been deducted, so this is not
+                        the employee's final protected net home pay.
+                    </em>
+                </p>
+
+                
+                <h3>Provisional Employer Cost Summary</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Year 1</th>
+                            <th>Year 2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Gross Salary and Bonus</td>
+                            <td>
+                                £{{ results.year_1_summary.gross_home_pay_gbp|floatformat:2 }}
+                            </td>
+                            <td>
+                                £{{ results.year_2_summary.gross_home_pay_gbp|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Employer-Funded Benefits</td>
+                            <td>
+                                £{{ results.year_1_summary.total_benefits_gbp|floatformat:2 }}
+                            </td>
+                            <td>
+                                £{{ results.year_2_summary.total_benefits_gbp|floatformat:2 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Known Employer Outlay</strong></td>
+                            <td>
+                                <strong>
+                                    £{{ results.year_1_summary.known_employer_outlay_gbp|floatformat:2 }}
+                                </strong>
+                            </td>
+                            <td>
+                                <strong>
+                                    £{{ results.year_2_summary.known_employer_outlay_gbp|floatformat:2 }}
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>
+                    <em>
+                        These are provisional figures. They exclude UK income tax,
+                        tax gross-up, hypothetical Swiss income tax, and applicable
+                        employer social security contributions.
+                    </em>
+                </p>
+                
+                <h4>Combined Two-Year Provisional Outlay</h4>
+
+                <p>
+                    <strong>
+                        £{{ results.two_year_total|floatformat:2 }}
+                    </strong>
+                </p>
+
+                <p>
+                    This is the combined known employer outlay for both
+                    assignment years. It is not the final assignment cost.
+                </p>
+
+
+
             {% endif %}
             
         </section>
