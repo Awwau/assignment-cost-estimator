@@ -119,6 +119,7 @@ def prepare_uk_tax_inputs(home_pay, benefits):
     }
 
 
+
 def calculate_hypothetical_social_security(
     annual_home_pay_chf,
     exchange_rate,
@@ -127,11 +128,12 @@ def calculate_hypothetical_social_security(
     Calculate hypothetical Swiss employee social security
     deductions and convert them to GBP.
     """
+
     swiss_contributions = calculate_swiss_social_security(
         annual_home_pay_chf
     )
 
-    total_chf = swiss_contributions["total"]
+    total_chf = swiss_contributions["total_chf"]
 
     total_gbp = chf_to_gbp(
         total_chf,
@@ -139,8 +141,8 @@ def calculate_hypothetical_social_security(
     )
 
     return {
-        "ahv_iv_eo_chf": swiss_contributions["ahv_iv_eo"],
-        "alv_chf": swiss_contributions["alv"],
+        "ahv_iv_eo_chf": swiss_contributions["ahv_iv_eo_chf"],
+        "alv_chf": swiss_contributions["alv_chf"],
         "total_chf": total_chf,
         "total_gbp": total_gbp,
     }
@@ -201,3 +203,348 @@ def calculate_annual_cost_summary(
         "known_employer_outlay_gbp": known_employer_outlay,
         "is_final_employer_cost": False,
     }
+
+
+
+def calculate_relocation_relief(
+    moving_costs,
+    temporary_housing,
+    exemption_limit=Decimal("8000"),
+):
+    """
+    Calculate potential UK relocation relief.
+
+    Assumes moving costs and temporary accommodation
+    both meet HMRC's qualifying conditions.
+    """
+    moving_costs = Decimal(str(moving_costs))
+    temporary_housing = Decimal(str(temporary_housing))
+    exemption_limit = Decimal(str(exemption_limit))
+
+    if any(amount < 0 for amount in (
+        moving_costs,
+        temporary_housing,
+        exemption_limit,
+    )):
+        raise ValueError("Amounts cannot be negative.")
+
+    total_qualifying_costs = moving_costs + temporary_housing
+
+    exempt_amount = min(
+        total_qualifying_costs,
+        exemption_limit,
+    )
+
+    potentially_taxable_amount = (
+        total_qualifying_costs - exempt_amount
+    )
+
+    return {
+        "total_qualifying_costs": total_qualifying_costs,
+        "exempt_amount": exempt_amount,
+        "potentially_taxable_amount": potentially_taxable_amount,
+    }
+
+
+def calculate_uk_taxable_benefits(
+    benefits,
+    relocation_relief,
+):
+    """
+    Prepare taxable assignment benefits.
+
+    Housing taxable value is left unresolved because
+    accommodation benefit valuation requires
+    a separate HMRC calculation.
+    """
+
+    taxable_cash = benefits["relocation"]
+
+    taxable_relocation_expenses = (
+        relocation_relief["potentially_taxable_amount"]
+    )
+
+    known_taxable_amount = (
+        taxable_cash + taxable_relocation_expenses
+    )
+
+    return {
+        "taxable_cash": taxable_cash,
+        "taxable_relocation_expenses": taxable_relocation_expenses,
+        "known_taxable_amount": known_taxable_amount,
+        "housing_employer_cost": benefits["housing"],
+        "housing_taxable_value": None,
+        "is_complete": False,
+    }
+
+
+
+def assess_employer_accommodation(
+    annual_housing_cost,
+    employer_rents_property=True,
+    employee_contribution=0,
+    assumed_taxable_value=None,
+):
+    """
+    Assess employer-provided accommodation.
+
+    A taxable value may be supplied as an explicit
+    modelling assumption pending HMRC valuation.
+    """
+    annual_housing_cost = Decimal(str(annual_housing_cost))
+    employee_contribution = Decimal(str(employee_contribution))
+
+    if annual_housing_cost < 0 or employee_contribution < 0:
+        raise ValueError("Accommodation amounts cannot be negative.")
+
+    if assumed_taxable_value is not None:
+        assumed_taxable_value = Decimal(str(assumed_taxable_value))
+
+        if assumed_taxable_value < 0:
+            raise ValueError("Taxable value cannot be negative.")
+
+        valuation_status = "Assumed taxable value - requires verification"
+        requires_valuation = True
+    else:
+        valuation_status = "Pending HMRC accommodation assessment"
+        requires_valuation = True
+
+    return {
+        "annual_employer_cost": annual_housing_cost,
+        "employer_rents_property": employer_rents_property,
+        "employee_contribution": employee_contribution,
+        "taxable_benefit_value": assumed_taxable_value,
+        "requires_valuation": requires_valuation,
+        "valuation_status": valuation_status,
+    }
+
+
+def calculate_total_taxable_benefits(
+    taxable_benefits,
+    accommodation,
+):
+    """
+    Combine known taxable benefits with an assumed
+    accommodation taxable value.
+
+    This produces a modelling scenario, not a
+    verified HMRC tax assessment.
+    """
+    housing_taxable_value = accommodation["taxable_benefit_value"]
+
+    if housing_taxable_value is None:
+        raise ValueError(
+            "An accommodation taxable value is required."
+        )
+
+    known_taxable_amount = taxable_benefits["known_taxable_amount"]
+
+    total_taxable_benefits = (
+        known_taxable_amount + housing_taxable_value
+    )
+
+    return {
+        "known_taxable_amount": known_taxable_amount,
+        "housing_taxable_value": housing_taxable_value,
+        "total_taxable_benefits": total_taxable_benefits,
+        "is_verified": False,
+    }
+
+
+
+
+def prepare_uk_taxable_income(
+    pay_after_social_security,
+    total_taxable_benefits,
+    hypothetical_swiss_income_tax_gbp=None,
+):
+    """
+    Prepare the UK tax gross-up base using
+    the formula specified in The Cozm brief.
+    """
+
+    pay_after_ss = Decimal(
+        str(pay_after_social_security["pay_after_social_security_gbp"])
+    )
+
+    taxable_benefits = Decimal(
+        str(total_taxable_benefits["total_taxable_benefits"])
+    )
+
+    if hypothetical_swiss_income_tax_gbp is None:
+        return {
+            "taxable_income_before_gross_up": None,
+            "is_complete": False,
+        }
+
+    hypothetical_tax = Decimal(
+        str(hypothetical_swiss_income_tax_gbp)
+    )
+
+    if hypothetical_tax < 0:
+        raise ValueError(
+            "Hypothetical Swiss income tax cannot be negative."
+        )
+
+    taxable_income = (
+        pay_after_ss
+        - hypothetical_tax
+        + taxable_benefits
+    )
+
+    return {
+        "pay_after_social_security": pay_after_ss,
+        "taxable_benefits": taxable_benefits,
+        "hypothetical_swiss_income_tax": hypothetical_tax,
+        "taxable_income_before_gross_up": taxable_income,
+        "is_complete": True,
+    }
+
+
+def calculate_hypothetical_swiss_income_tax(
+    federal_tax_chf,
+    cantonal_tax_chf,
+    municipal_tax_chf,
+    exchange_rate,
+):
+    """
+    Combine Swiss federal, cantonal and municipal
+    income tax estimates for tax equalisation.
+
+    Tax amounts must be calculated or sourced separately.
+    """
+    federal_tax_chf = Decimal(str(federal_tax_chf))
+    cantonal_tax_chf = Decimal(str(cantonal_tax_chf))
+    municipal_tax_chf = Decimal(str(municipal_tax_chf))
+    exchange_rate = Decimal(str(exchange_rate))
+
+    if any(amount < 0 for amount in (
+        federal_tax_chf,
+        cantonal_tax_chf,
+        municipal_tax_chf,
+    )):
+        raise ValueError("Tax amounts cannot be negative.")
+
+    total_tax_chf = (
+        federal_tax_chf
+        + cantonal_tax_chf
+        + municipal_tax_chf
+    )
+
+    return {
+        "federal_tax_chf": federal_tax_chf,
+        "cantonal_tax_chf": cantonal_tax_chf,
+        "municipal_tax_chf": municipal_tax_chf,
+        "total_tax_chf": total_tax_chf,
+        "total_tax_gbp": chf_to_gbp(
+            total_tax_chf,
+            exchange_rate,
+        ),
+    }
+
+
+def calculate_protected_net_home_pay(
+    home_pay,
+    hypothetical_social_security,
+    hypothetical_swiss_tax,
+):
+    """
+    Calculate the employee's provisional annual
+    protected net home pay under tax equalisation.
+
+    Deduct hypothetical Swiss employee social
+    security and income tax from gross home pay.
+    """
+
+    gross_home_pay_gbp = Decimal(
+        str(home_pay["total_home_pay_gbp"])
+    )
+
+    social_security_gbp = Decimal(
+        str(hypothetical_social_security["total_gbp"])
+    )
+
+    swiss_income_tax_gbp = Decimal(
+        str(hypothetical_swiss_tax["total_tax_gbp"])
+    )
+
+    protected_net_home_pay_gbp = (
+        gross_home_pay_gbp
+        - social_security_gbp
+        - swiss_income_tax_gbp
+    )
+
+    return {
+        "gross_home_pay_gbp": gross_home_pay_gbp,
+        "hypothetical_social_security_gbp": social_security_gbp,
+        "hypothetical_swiss_income_tax_gbp": swiss_income_tax_gbp,
+        "protected_net_home_pay_gbp": protected_net_home_pay_gbp,
+        "is_final": False,
+    }
+
+
+def calculate_final_employer_cost(
+    home_pay_gbp,
+    assignment_benefits_gbp,
+    uk_tax_gross_up_gbp,
+    employer_social_security_gbp,
+    hypothetical_swiss_income_tax_gbp,
+    hypothetical_swiss_social_security_gbp,
+):
+    """
+    Calculate annual employer assignment cost.
+
+    Follows the four-section structure required
+    by The Cozm assignment brief.
+    """
+
+    home_pay = Decimal(str(home_pay_gbp))
+    benefits = Decimal(str(assignment_benefits_gbp))
+    uk_tax = Decimal(str(uk_tax_gross_up_gbp))
+    employer_ss = Decimal(str(employer_social_security_gbp))
+    hypothetical_tax = Decimal(str(hypothetical_swiss_income_tax_gbp))
+    hypothetical_ss = Decimal(str(hypothetical_swiss_social_security_gbp))
+
+    amounts = [
+        home_pay,
+        benefits,
+        uk_tax,
+        employer_ss,
+        hypothetical_tax,
+        hypothetical_ss,
+    ]
+
+    if any(amount < 0 for amount in amounts):
+        raise ValueError("Employer cost components cannot be negative.")
+
+    total_hypothetical_deductions = (
+        hypothetical_tax + hypothetical_ss
+    )
+
+    total_employer_cost = (
+        home_pay
+        + benefits
+        + uk_tax
+        + employer_ss
+        - total_hypothetical_deductions
+    )
+
+    cost_multiple = (
+        total_employer_cost / home_pay
+        if home_pay > 0
+        else None
+    )
+
+    return {
+        "home_pay_gbp": home_pay,
+        "assignment_benefits_gbp": benefits,
+        "uk_tax_gross_up_gbp": uk_tax,
+        "employer_social_security_gbp": employer_ss,
+        "hypothetical_swiss_income_tax_gbp": hypothetical_tax,
+        "hypothetical_swiss_social_security_gbp": hypothetical_ss,
+        "total_hypothetical_deductions_gbp": total_hypothetical_deductions,
+        "total_employer_cost_gbp": total_employer_cost,
+        "cost_multiple": cost_multiple,
+        "is_final": False,
+    }
+

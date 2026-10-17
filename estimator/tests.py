@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 
 from .services.currency import chf_to_gbp
 
+
 from .services.uk_tax import (
     calculate_uk_income_tax,
     calculate_personal_allowance,
@@ -13,6 +14,12 @@ from .services.uk_tax import (
 
 from .services.swiss_tax import (
     calculate_swiss_social_security
+)
+
+from estimator.services.assignment_cost import (
+    calculate_home_pay,
+    calculate_assignment_benefits,
+    calculate_final_employer_cost,
 )
 
 class CurrencyConversionTests(SimpleTestCase):
@@ -70,17 +77,17 @@ class SwissSocialSecurityTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            result["ahv_iv_eo"],
+            result["ahv_iv_eo_chf"],
             Decimal("9010.000")
         )
 
         self.assertEqual(
-            result["alv"],
+            result["alv_chf"],
             Decimal("1630.200")
         )
 
         self.assertEqual(
-            result["total"],
+            result["total_chf"],
             Decimal("10640.200")
         )
 
@@ -90,7 +97,7 @@ class SwissSocialSecurityTests(SimpleTestCase):
         )
 
         self.assertEqual(
-            result["total"],
+            result["total_chf"],
             Decimal("6400.000")
         )
 
@@ -99,28 +106,21 @@ class SwissSocialSecurityTests(SimpleTestCase):
             calculate_swiss_social_security(-100)
 
 
-def test_swiss_federal_tax_brackets(self):
-    from decimal import Decimal
-    from estimator.services.swiss_tax import (
-        calculate_progressive_tax,
-        FEDERAL_TAX_BRACKETS_2026,
-    )
 
-    result = calculate_progressive_tax(
-        Decimal("146979"),
-        FEDERAL_TAX_BRACKETS_2026,
-    )
+class SwissFederalTaxTests(SimpleTestCase):
 
-    self.assertEqual(result, Decimal("6743.24"))
+    def test_swiss_federal_tax_brackets(self):
+        from estimator.services.swiss_tax import (
+            calculate_progressive_tax,
+            FEDERAL_TAX_BRACKETS_2026,
+        )
 
+        result = calculate_progressive_tax(
+            Decimal("146979"),
+            FEDERAL_TAX_BRACKETS_2026,
+        )
 
-from decimal import Decimal
-from django.test import SimpleTestCase
-
-from estimator.services.assignment_cost import (
-    calculate_home_pay,
-    calculate_assignment_benefits,
-)
+        self.assertEqual(result, Decimal("6743.3300"))
 
 
 class AssignmentCostTests(SimpleTestCase):
@@ -181,3 +181,28 @@ class AssignmentCostTests(SimpleTestCase):
                 bonus=20000,
                 exchange_rate=1.10,
             )
+
+
+class FinalEmployerCostTests(SimpleTestCase):
+
+    def test_final_employer_cost(self):
+        result = calculate_final_employer_cost(
+            home_pay_gbp=Decimal("154545.45"),
+            assignment_benefits_gbp=Decimal("50545.45"),
+            uk_tax_gross_up_gbp=Decimal("103890.77"),
+            employer_social_security_gbp=Decimal("9672.91"),
+            hypothetical_swiss_income_tax_gbp=Decimal("29780.38"),
+            hypothetical_swiss_social_security_gbp=Decimal("9672.91"),
+        )
+
+        self.assertEqual(
+            result["total_employer_cost_gbp"],
+            Decimal("279201.29"),
+        )
+
+        self.assertEqual(
+            result["total_hypothetical_deductions_gbp"],
+            Decimal("39453.29"),
+        )
+
+        self.assertFalse(result["is_final"])

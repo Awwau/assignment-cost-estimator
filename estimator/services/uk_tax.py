@@ -71,3 +71,61 @@ def calculate_tax_gross_up(taxable_pay, tolerance=Decimal("0.01"), max_iteration
         "Tax gross-up calculation did not converge."
     )
 
+"""
+THIS IS NOT NECESSARY AND SHOULD BE REMOVED
+
+"""
+
+def calculate_tax_equalisation_adjustment(
+    taxable_income_before_adjustment,
+    hypothetical_deductions_gbp,
+    tolerance=Decimal("0.01"),
+    max_iterations=100,
+):
+    """
+    Calculate the additional taxable employer payment
+    needed to cover UK income tax after accounting for
+    hypothetical deductions retained from the employee.
+
+    Model assumption:
+    - UK tax is paid from employee cash compensation.
+    - Hypothetical deductions are withheld internally.
+    - Employer adds taxable compensation so the employee
+      retains their protected net home pay.
+    """
+
+    taxable_income = Decimal(
+        str(taxable_income_before_adjustment)
+    )
+    hypothetical_deductions = Decimal(
+        str(hypothetical_deductions_gbp)
+    )
+    tolerance = Decimal(str(tolerance))
+
+    if taxable_income < 0 or hypothetical_deductions < 0:
+        raise ValueError("Amounts cannot be negative.")
+
+    if tolerance <= 0:
+        raise ValueError("Tolerance must be greater than zero.")
+
+    adjustment = Decimal("0")
+
+    for _ in range(max_iterations):
+        uk_tax = calculate_uk_income_tax(
+            taxable_income + adjustment
+        )
+
+        new_adjustment = uk_tax - hypothetical_deductions
+
+        if new_adjustment < 0:
+            new_adjustment = Decimal("0")
+
+        if abs(new_adjustment - adjustment) < tolerance:
+            return new_adjustment
+
+        adjustment = new_adjustment
+
+    raise RuntimeError(
+        "Tax equalisation adjustment did not converge."
+    )
+
