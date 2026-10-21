@@ -46,6 +46,12 @@ The form allows the user to change relevant inputs and recalculate the estimates
 - **SQLite** for local development
 - Django's built-in testing framework
 
+## Video Walkthrough
+
+A short demonstration of the Assignment Cost Estimator, including the user interface, cost calculations, immigration guidance, Django backend and automated tests.
+
+**[Watch the Loom walkthrough](https://www.loom.com/share/1280fc04593b4783a00db6f5409f7313)**
+
 ## Quick Start (Windows PowerShell)
 
 ### Prerequisites
