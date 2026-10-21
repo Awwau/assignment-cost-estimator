@@ -56,11 +56,10 @@ The form allows the user to change relevant inputs and recalculate the estimates
 ### 1. Get the project
 
 ```powershell
-git clone YOUR_REPOSITORY_URL
+git clone https://github.com/Awwau/assignment-cost-estimator.git
 cd assignment-cost-estimator
 ```
 
-Replace `YOUR_REPOSITORY_URL` with the repository's actual HTTPS clone URL once it has been published. Alternatively, extract the project archive and open a PowerShell terminal in its root directory (the directory containing `manage.py`).
 
 ### 2. Create and activate a virtual environment
 
@@ -190,6 +189,13 @@ The Quick Start instructions run Django's **development server**. They do **not*
 6. Confirm that the application's security-related settings match the hosting platform before enabling HTTPS redirects or secure cookies.
 
 The current project is intended to be evaluated **locally** unless a separate deployment configuration is provided. No public production deployment is claimed.
+
+## AI Tools Used
+
+**ChatGPT (OpenAI)** was used as a development assistant to support project planning, explain Django and Python concepts, review code, troubleshoot errors, improve documentation, and suggest testing approaches.
+
+AI-generated suggestions were reviewed and adapted during development. The application's calculations, assumptions and functionality were checked through manual testing, automated tests and reference to relevant official sources.
+
 
 ## Project Status
 
