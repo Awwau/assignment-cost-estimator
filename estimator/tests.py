@@ -1,26 +1,25 @@
-from django.test import TestCase
 
 from decimal import Decimal
+
 from django.test import SimpleTestCase
 
-from .services.currency import chf_to_gbp
-
-
-from .services.uk_tax import (
-    calculate_uk_income_tax,
-    calculate_personal_allowance,
-    calculate_tax_gross_up,
-)
-
-from .services.swiss_tax import (
-    calculate_swiss_social_security
-)
-
-from estimator.services.assignment_cost import (
-    calculate_home_pay,
+from .services.assignment_cost import (
     calculate_assignment_benefits,
     calculate_final_employer_cost,
+    calculate_home_pay,
 )
+from .services.currency import chf_to_gbp
+from .services.swiss_tax import (
+    FEDERAL_TAX_BRACKETS_2026,
+    calculate_progressive_tax,
+    calculate_swiss_social_security,
+)
+from .services.uk_tax import (
+    calculate_personal_allowance,
+    calculate_tax_gross_up,
+    calculate_uk_income_tax,
+)
+
 
 class CurrencyConversionTests(SimpleTestCase):
     def test_chf_to_gbp(self):
@@ -29,7 +28,7 @@ class CurrencyConversionTests(SimpleTestCase):
         self.assertAlmostEqual(
             result,
             Decimal("136363.63636363636"),
-            places=8
+            places=8,
         )
 
     def test_invalid_exchange_rate(self):
@@ -37,9 +36,7 @@ class CurrencyConversionTests(SimpleTestCase):
             chf_to_gbp(Decimal("150000"), Decimal("0"))
 
 
-
 class UKTaxTests(SimpleTestCase):
-
     def test_personal_allowance(self):
         self.assertEqual(calculate_personal_allowance(60000), Decimal("12570"))
 
@@ -57,17 +54,18 @@ class UKTaxTests(SimpleTestCase):
 
     def test_gross_up(self):
         taxable_pay = Decimal("80000")
-
         tax = calculate_tax_gross_up(taxable_pay)
-
         recalculated_tax = calculate_uk_income_tax(taxable_pay + tax)
 
-        self.assertAlmostEqual(tax, recalculated_tax, delta=Decimal("0.01"))
+        self.assertAlmostEqual(
+            tax,
+            recalculated_tax,
+            delta=Decimal("0.01"),
+        )
 
     def test_negative_income(self):
         with self.assertRaises(ValueError):
             calculate_uk_income_tax(-100)
-
 
     def test_uk_income_tax_bands(self):
         expected_results = {
@@ -83,37 +81,29 @@ class UKTaxTests(SimpleTestCase):
                 self.assertEqual(actual_tax, expected_tax)
 
 
-
 class SwissSocialSecurityTests(SimpleTestCase):
-
     def test_standard_assignment_income(self):
-        result = calculate_swiss_social_security(
-            Decimal("170000")
-        )
+        result = calculate_swiss_social_security(Decimal("170000"))
 
         self.assertEqual(
             result["ahv_iv_eo_chf"],
-            Decimal("9010.000")
+            Decimal("9010.000"),
         )
-
         self.assertEqual(
             result["alv_chf"],
-            Decimal("1630.200")
+            Decimal("1630.200"),
         )
-
         self.assertEqual(
             result["total_chf"],
-            Decimal("10640.200")
+            Decimal("10640.200"),
         )
 
     def test_income_below_alv_limit(self):
-        result = calculate_swiss_social_security(
-            Decimal("100000")
-        )
+        result = calculate_swiss_social_security(Decimal("100000"))
 
         self.assertEqual(
             result["total_chf"],
-            Decimal("6400.000")
+            Decimal("6400.000"),
         )
 
     def test_negative_income(self):
@@ -121,15 +111,8 @@ class SwissSocialSecurityTests(SimpleTestCase):
             calculate_swiss_social_security(-100)
 
 
-
 class SwissFederalTaxTests(SimpleTestCase):
-
     def test_swiss_federal_tax_brackets(self):
-        from estimator.services.swiss_tax import (
-            calculate_progressive_tax,
-            FEDERAL_TAX_BRACKETS_2026,
-        )
-
         result = calculate_progressive_tax(
             Decimal("146979"),
             FEDERAL_TAX_BRACKETS_2026,
@@ -139,7 +122,6 @@ class SwissFederalTaxTests(SimpleTestCase):
 
 
 class AssignmentCostTests(SimpleTestCase):
-
     def test_annual_home_pay(self):
         result = calculate_home_pay(
             base_salary=150000,
@@ -151,7 +133,6 @@ class AssignmentCostTests(SimpleTestCase):
             result["total_home_pay_chf"],
             Decimal("170000"),
         )
-
         self.assertAlmostEqual(
             result["total_home_pay_gbp"],
             Decimal("154545.45"),
@@ -199,7 +180,6 @@ class AssignmentCostTests(SimpleTestCase):
 
 
 class FinalEmployerCostTests(SimpleTestCase):
-
     def test_final_employer_cost(self):
         result = calculate_final_employer_cost(
             home_pay_gbp=Decimal("154545.45"),
@@ -214,14 +194,11 @@ class FinalEmployerCostTests(SimpleTestCase):
             result["total_employer_cost_gbp"],
             Decimal("279201.29"),
         )
-
         self.assertEqual(
             result["total_hypothetical_deductions_gbp"],
             Decimal("39453.29"),
         )
-
         self.assertFalse(result["is_final"])
-
 
     def test_zero_home_pay_caps_hypothetical_deductions(self):
         result = calculate_final_employer_cost(
@@ -235,11 +212,9 @@ class FinalEmployerCostTests(SimpleTestCase):
 
         self.assertEqual(
             result["total_hypothetical_deductions_gbp"],
-            Decimal("0")
+            Decimal("0"),
         )
-
         self.assertEqual(
             result["total_employer_cost_gbp"],
-            Decimal("51000")
+            Decimal("51000"),
         )
-

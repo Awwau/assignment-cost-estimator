@@ -71,7 +71,6 @@
             </button>
         </nav>
 
-
         <section id="cost-estimate" class="tab-content" role="tabpanel" aria-labelledby="cost-tab">
             <h2>Cost Estimate</h2>
             <p>
@@ -179,7 +178,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                <!-- </details> -->
+
             {% endif %}
 
             {% if results %}
@@ -222,7 +221,7 @@
                             {% else %}
                             N/A
                             {% endif %}
-                            <!-- {{ results.final_two_year_multiple|floatformat:2 }}× -->
+
                         </h3>
                     </div>
 
@@ -233,7 +232,6 @@
                     social security and benefit assumptions.
                 </p>
 
-                
                 <h2>Assignment Employer Cost Estimate</h2>
 
                 <p>
@@ -251,7 +249,7 @@
                     </thead>
 
                     <tbody>
-                        <!-- SECTION 1: HOME PAY -->
+
                         <tr>
                             <th colspan="3">1. Home Pay</th>
                         </tr>
@@ -262,12 +260,10 @@
                             <td>£{{ results.year_2_final_cost.home_pay_gbp|floatformat:2 }}</td>
                         </tr>
 
-                        <!-- SECTION 2: ASSIGNMENT BENEFITS -->
                         <tr>
                             <th colspan="3">2. Assignment Benefits</th>
                         </tr>
 
-                        
                         <tr>
                             <td>
                                 Employer-Paid Housing
@@ -309,8 +305,6 @@
                             <td> <strong> £{{ results.year_2_final_cost.assignment_benefits_gbp|floatformat:2 }} </strong> </td>
                         </tr>
 
-
-                        <!-- SECTION 3: HOST TAX AND EMPLOYER CHARGES -->
                         <tr>
                             <th colspan="3">
                                 3. Host Tax and Employer Charges
@@ -329,7 +323,6 @@
                             <td>£{{ results.year_2_final_cost.employer_social_security_gbp|floatformat:2 }}</td>
                         </tr>
 
-                        <!-- SECTION 4: HYPOTHETICAL DEDUCTIONS -->
                         <tr>
                             <th colspan="3">4. Hypothetical Swiss Deductions</th>
                         </tr>
@@ -346,7 +339,6 @@
                             <td>-£{{ results.year_2_final_cost.hypothetical_swiss_social_security_gbp|floatformat:2 }}</td>
                         </tr>
 
-                        <!-- TOTALS -->
                         <tr>
                             <th>Total Employer Cost</th>
                             <th>£{{ results.year_1_final_cost.total_employer_cost_gbp|floatformat:2 }}</th>
@@ -374,19 +366,12 @@
                 </table>
 
                 <h3>Two-Year Assignment Total</h3>
-                <h3>
-                    <p>
-                        <strong>
-                            £{{ results.final_two_year_total|floatformat:2 }}
-                        </strong>
-                    </p>
-                </h3>
+                <p><strong>£{{ results.final_two_year_total|floatformat:2 }}</strong></p>
 
-                
                 <p>
                     Total cost as a multiple of two years of home pay:
                     <strong>
-                        {% if results.final_two_year_multiple != None %}
+                        {% if results.final_two_year_multiple is not None %}
                             {{ results.final_two_year_multiple|floatformat:2 }}×
                         {% else %}
                             N/A
@@ -404,7 +389,6 @@
                     </small>
                 </p>
 
-
                 <details class="calculation-details">
                     <summary>
                         <span>Detailed Calculations and Tax Methodology</span>
@@ -417,7 +401,7 @@
 
                         <h3>Annual Home Pay</h3>
                         <p>Salary and Bonus: £{{ results.home_pay.total_home_pay_gbp|floatformat:2 }}</p>
-                        
+
                         <h3>Year 1 Benefits and Tax Treatment</h3>
                         <p>
                             Housing: taxable benefit-in-kind, subject to HMRC valuation rules.
@@ -427,7 +411,6 @@
                             combined £8,000 limit.
                         </p>
 
-                        
                         <table>
                             <thead>
                                 <tr>
@@ -436,7 +419,7 @@
                                     <th scope="col">UK Tax Treatment</th>
                                 </tr>
                             </thead>
-                            
+
                             <tbody>
                                 <tr>
                                     <th scope="row">Housing</th>
@@ -471,8 +454,8 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
-                        <h3>Year 2 Benefits</h3>                
+
+                        <h3>Year 2 Benefits</h3>
                         <table>
                             <thead>
                                 <tr>
@@ -506,13 +489,12 @@
                         <p>
                             <em>
                                 <small>
-                                    These figures show salary and direct assignment benefits 
+                                    These figures show salary and direct assignment benefits
                                     before UK taxes, employer charges, and hypothetical Swiss deductions. They are not final employer costs.
-                                </small> 
+                                </small>
                             </em>
                         </p>
 
-                        
                         <h3>Hypothetical Swiss Social Security</h3>
 
                         <table>
@@ -530,7 +512,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Unemployment Insurance (AHV) </th>
+                                    <th scope="row">Unemployment Insurance (ALV) </th>
                                     <td>
                                         CHF {{ results.hypothetical_social_security.alv_chf|floatformat:2 }}
                                     </td>
@@ -556,14 +538,14 @@
                         <p>
                             <em>
                                 <small>
-                                    Hypothetical Swiss income tax is calculated separately below. 
-                                    Both employee deductions will be considered when determining 
+                                    Hypothetical Swiss income tax is calculated separately below.
+                                    Both employee deductions will be considered when determining
                                     protected net home pay.
                                 </small>
-                                
+
                             </em>
                         </p>
-                        
+
                         <details class="source-details">
                             <summary>Swiss Social Security Rates and Sources</summary>
                             <div class="source-details-content">
@@ -613,10 +595,8 @@
                             </small>
                         </p>
 
-                        
                         </details>
 
-                        
                         <h3>Home Pay After Hypothetical Social Security in GBP</h3>
 
                         <table>
@@ -659,8 +639,6 @@
                                 </small>
                             </em>
                         </p>
-
-
 
                         <h3>Hypothetical Swiss Income Tax</h3>
 
@@ -838,8 +816,6 @@
 
                         </ul>
 
-
-                        
                         </details>
 
                         <h3>Provisional Protected Net Home Pay in GBP</h3>
@@ -899,7 +875,7 @@
                                 </small>
                             </em>
                         </p>
-                        
+
                         <h3>UK Income Tax Gross-Up</h3>
 
                         <p>
@@ -927,7 +903,6 @@
                                     </td>
                                 </tr>
 
-                               
                                 <tr>
                                     <td>Less: Hypothetical Swiss Social Security</td>
                                     <td>
@@ -937,7 +912,6 @@
                                         -£{{ results.year_2_final_cost.applied_hypothetical_swiss_social_security_gbp|floatformat:2|intcomma }}
                                     </td>
                                 </tr>
-
 
                                 <tr>
                                     <td>Less: Hypothetical Swiss Income Tax</td>
@@ -1003,28 +977,6 @@
                             </tbody>
                         </table>
 
-                        <!-- <table>
-                            <thead>
-                                <tr>
-                                    <th>Calculation</th>
-                                    <th>Year 1</th>
-                                    <th>Year 2</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Taxable Income Before Gross-Up</td>
-                                    <td>£{{ results.year_1_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
-                                    <td>£{{ results.year_2_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Employer-Paid UK Income Tax (Grossed Up)</td>
-                                    <td><strong>£{{ results.year_1_uk_tax_gross_up|floatformat:2 }}</strong></td>
-                                    <td><strong>£{{ results.year_2_uk_tax_gross_up|floatformat:2 }}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table> -->
-
                         <p>
                             <em>
                                 <small>
@@ -1034,7 +986,6 @@
                             </em>
                         </p>
 
-                        
                         <details class="source-details">
                             <summary>UK Income Tax Rules and Sources</summary>
                             <div class="source-details-content">
@@ -1112,7 +1063,6 @@
 
                         </details>
 
-                        
                             <h3> Applicable Social Security System</h3>
 
                             <div class="source-details-content">
@@ -1219,10 +1169,9 @@
                                 This estimate excludes other potentially applicable Swiss employer
                                 contributions and insurance costs.
                                 </small>
-                            </em> 
+                            </em>
                         </p>
 
-                                        
                         <h3>UK Relocation Expense Relief</h3>
 
                         <table>
@@ -1278,7 +1227,7 @@
                                 </small>
                             </em>
                         </p>
-                        
+
                         <details class="source-details">
                             <summary>Relocation Relief - HMRC Rules</summary>
                             <div class="source-details-content">
@@ -1322,7 +1271,6 @@
                             </small>
                         </p>
 
-                        
                         </details>
 
                         <h3>Total UK Taxable Benefits</h3>
@@ -1381,9 +1329,6 @@
                             </tbody>
                         </table>
 
-
-                        
-                        
                         <details class="source-details">
                             <summary>Accommodation Benefit - HMRC Rules</summary>
                             <div class="source-details-content">
@@ -1403,7 +1348,6 @@
                             information to establish eligibility.
                         </p>
 
-
                         <p>
                             <strong>This is a modelling assumption, not a confirmed
                             HMRC valuation.</strong> A different taxable value would
@@ -1418,16 +1362,15 @@
                             </a>
                         </p>
 
-                        
                         </details>
 
                     </div>
                 </details>
 
             {% endif %}
-            
+
         </section>
-        
+
         <section id="immigration" class="tab-content" role="tabpanel" aria-labelledby="immigration-tab" hidden>
             <h2>Immigration Requirements</h2>
 
@@ -1491,7 +1434,7 @@
             <details class="immigration-details">
                 <summary>Work Visa and Sponsorship</summary>
                 <div class="immigration-details-content">
-                    
+
                     <p>
                         <strong>Work authorisation:</strong>
                         A Swiss national requires appropriate <strong>UK VISA</strong> to undertake a two-year
@@ -1526,13 +1469,13 @@
                             occupation's going rate, whichever is higher.
                         </li>
                         <li>
-                            If the employee is earning less than £73,900 a year, 
+                            If the employee is earning less than £73,900 a year,
                             they must have worked for their employer outside the UK for at least 12 months.
                         </li>
                         <li>
                             The employee must meet the overseas employment requirements.
                         </li>
-                        
+
                     </ul>
 
                     <h4>Assessment for this test case</h4>
@@ -1654,7 +1597,7 @@
                         <li>
                             Check the UK Visas and Immigration (UKVI)
                             account and confirm that the eVisa is valid and details
-                            are accurate. If you do not already have a UKVI account, 
+                            are accurate. If you do not already have a UKVI account,
                             you need to set up access to your eVisa.
                         </li>
                         <li>
@@ -1907,7 +1850,7 @@
                         <li>
                             <a href="https://www.gov.uk/uk-visa-sponsorship-employers/apply-for-your-licence"
                             target="_blank" rel="noopener noreferrer">
-                            GOV.UK - UK visa sponsorship for employers 
+                            GOV.UK - UK visa sponsorship for employers
                             </a>
                         </li>
                         <li>
@@ -1916,12 +1859,11 @@
                                 GOV.UK - Overseas Visa Processing Times
                             </a>
                         </li>
-                        
+
                     </ul>
                 </div>
             </details>
 
-            
             <h3>Official Sources</h3>
 
             <p>
@@ -1997,13 +1939,10 @@
                 </em>
             </p>
 
-
-
-
         </section>
 
     </main>
-    
+
     <script>
         function showTab(tabId) {
             const tabs = document.querySelectorAll(".tab-button");

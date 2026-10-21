@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+
 PERSONAL_ALLOWANCE = Decimal("12570")
 ALLOWANCE_TAPER_START = Decimal("100000")
 
@@ -12,6 +13,7 @@ ADDITIONAL_RATE = Decimal("0.45")
 
 
 def calculate_personal_allowance(income):
+    """Calculate the personal allowance after income-based tapering."""
     income = Decimal(str(income))
     if income < 0:
         raise ValueError("Income cannot be negative.")
@@ -22,40 +24,33 @@ def calculate_personal_allowance(income):
     return max(PERSONAL_ALLOWANCE - reduction, Decimal("0"))
 
 
-
 def calculate_uk_income_tax(income):
+    """Estimate annual income tax using England's modelled tax bands."""
     income = Decimal(str(income))
 
     if income < 0:
         raise ValueError("Income cannot be negative.")
 
     personal_allowance = calculate_personal_allowance(income)
+    taxable_income = max(income - personal_allowance, Decimal("0"))
 
-    taxable_income = max(
-        income - personal_allowance,
-        Decimal("0")
-    )
-
-    basic_amount = min(
-        taxable_income,
-        BASIC_RATE_LIMIT
-    )
+    basic_amount = min(taxable_income, BASIC_RATE_LIMIT)
 
     higher_rate_limit = max(
         ADDITIONAL_RATE_THRESHOLD
         - personal_allowance
         - BASIC_RATE_LIMIT,
-        Decimal("0")
+        Decimal("0"),
     )
 
     higher_amount = min(
         max(taxable_income - BASIC_RATE_LIMIT, Decimal("0")),
-        higher_rate_limit
+        higher_rate_limit,
     )
 
     additional_amount = max(
         income - ADDITIONAL_RATE_THRESHOLD,
-        Decimal("0")
+        Decimal("0"),
     )
 
     tax = (
@@ -67,25 +62,25 @@ def calculate_uk_income_tax(income):
     return tax
 
 
-def calculate_tax_gross_up(taxable_pay, tolerance=Decimal("0.01"), max_iterations=100):
+def calculate_tax_gross_up(
+    taxable_pay,
+    tolerance=Decimal("0.01"),
+    max_iterations=100,
+):
+    """Iterate UK tax-on-tax until the gross-up estimate converges."""
     taxable_pay = Decimal(str(taxable_pay))
     tolerance = Decimal(str(tolerance))
 
     if taxable_pay < 0:
-        raise ValueError(
-            "Taxable pay cannot be negative."
-        )
+        raise ValueError("Taxable pay cannot be negative.")
 
     if tolerance <= 0:
-        raise ValueError(
-            "Tolerance must be greater than zero."
-        )
+        raise ValueError("Tolerance must be greater than zero.")
 
     tax_estimate = Decimal("0")
 
-    for iteration in range(max_iterations):
+    for _ in range(max_iterations):
         new_tax = calculate_uk_income_tax(taxable_pay + tax_estimate)
-
         difference = abs(new_tax - tax_estimate)
 
         if difference < tolerance:
@@ -93,65 +88,4 @@ def calculate_tax_gross_up(taxable_pay, tolerance=Decimal("0.01"), max_iteration
 
         tax_estimate = new_tax
 
-    raise RuntimeError(
-        "Tax gross-up calculation did not converge."
-    )
-
-"""
-THIS IS NOT NECESSARY AND SHOULD BE REMOVED
-
-"""
-
-def calculate_tax_equalisation_adjustment(
-    taxable_income_before_adjustment,
-    hypothetical_deductions_gbp,
-    tolerance=Decimal("0.01"),
-    max_iterations=100,
-):
-    """
-    Calculate the additional taxable employer payment
-    needed to cover UK income tax after accounting for
-    hypothetical deductions retained from the employee.
-
-    Model assumption:
-    - UK tax is paid from employee cash compensation.
-    - Hypothetical deductions are withheld internally.
-    - Employer adds taxable compensation so the employee
-      retains their protected net home pay.
-    """
-
-    taxable_income = Decimal(
-        str(taxable_income_before_adjustment)
-    )
-    hypothetical_deductions = Decimal(
-        str(hypothetical_deductions_gbp)
-    )
-    tolerance = Decimal(str(tolerance))
-
-    if taxable_income < 0 or hypothetical_deductions < 0:
-        raise ValueError("Amounts cannot be negative.")
-
-    if tolerance <= 0:
-        raise ValueError("Tolerance must be greater than zero.")
-
-    adjustment = Decimal("0")
-
-    for _ in range(max_iterations):
-        uk_tax = calculate_uk_income_tax(
-            taxable_income + adjustment
-        )
-
-        new_adjustment = uk_tax - hypothetical_deductions
-
-        if new_adjustment < 0:
-            new_adjustment = Decimal("0")
-
-        if abs(new_adjustment - adjustment) < tolerance:
-            return new_adjustment
-
-        adjustment = new_adjustment
-
-    raise RuntimeError(
-        "Tax equalisation adjustment did not converge."
-    )
-
+    raise RuntimeError("Tax gross-up calculation did not converge.")
