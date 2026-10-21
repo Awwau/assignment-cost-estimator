@@ -69,6 +69,21 @@ class UKTaxTests(SimpleTestCase):
             calculate_uk_income_tax(-100)
 
 
+    def test_uk_income_tax_bands(self):
+        expected_results = {
+            Decimal("100000"): Decimal("27432.00"),
+            Decimal("110000"): Decimal("33432.00"),
+            Decimal("125140"): Decimal("42516.00"),
+            Decimal("150000"): Decimal("53703.00"),
+        }
+
+        for income, expected_tax in expected_results.items():
+            with self.subTest(income=income):
+                actual_tax = calculate_uk_income_tax(income)
+                self.assertEqual(actual_tax, expected_tax)
+
+
+
 class SwissSocialSecurityTests(SimpleTestCase):
 
     def test_standard_assignment_income(self):
@@ -206,3 +221,25 @@ class FinalEmployerCostTests(SimpleTestCase):
         )
 
         self.assertFalse(result["is_final"])
+
+
+    def test_zero_home_pay_caps_hypothetical_deductions(self):
+        result = calculate_final_employer_cost(
+            home_pay_gbp=Decimal("0"),
+            assignment_benefits_gbp=Decimal("36000"),
+            uk_tax_gross_up_gbp=Decimal("15000"),
+            employer_social_security_gbp=Decimal("0"),
+            hypothetical_swiss_income_tax_gbp=Decimal("21.82"),
+            hypothetical_swiss_social_security_gbp=Decimal("0"),
+        )
+
+        self.assertEqual(
+            result["total_hypothetical_deductions_gbp"],
+            Decimal("0")
+        )
+
+        self.assertEqual(
+            result["total_employer_cost_gbp"],
+            Decimal("51000")
+        )
+

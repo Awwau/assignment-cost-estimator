@@ -386,17 +386,23 @@ def prepare_uk_taxable_income(
             "Hypothetical Swiss income tax cannot be negative."
         )
 
-    taxable_income = (
-        pay_after_ss
-        - hypothetical_tax
-        + taxable_benefits
+
+    protected_net_home_pay = max(
+        pay_after_ss - hypothetical_tax,
+        Decimal("0")
     )
 
+    taxable_income = (
+        protected_net_home_pay
+        + taxable_benefits
+    )
+    
     return {
         "pay_after_social_security": pay_after_ss,
         "taxable_benefits": taxable_benefits,
         "hypothetical_swiss_income_tax": hypothetical_tax,
         "taxable_income_before_gross_up": taxable_income,
+        "protected_net_home_pay": protected_net_home_pay,
         "is_complete": True,
     }
 
@@ -468,10 +474,11 @@ def calculate_protected_net_home_pay(
         str(hypothetical_swiss_tax["total_tax_gbp"])
     )
 
-    protected_net_home_pay_gbp = (
+    protected_net_home_pay_gbp = max(
         gross_home_pay_gbp
         - social_security_gbp
-        - swiss_income_tax_gbp
+        - swiss_income_tax_gbp,
+        Decimal("0")
     )
 
     return {
@@ -517,8 +524,18 @@ def calculate_final_employer_cost(
     if any(amount < 0 for amount in amounts):
         raise ValueError("Employer cost components cannot be negative.")
 
-    total_hypothetical_deductions = (
-        hypothetical_tax + hypothetical_ss
+    total_hypothetical_deductions = min(
+        hypothetical_tax + hypothetical_ss, home_pay
+    )
+
+    applied_hypothetical_ss = min(
+        hypothetical_ss,
+        total_hypothetical_deductions
+    )
+
+    applied_hypothetical_tax = (
+        total_hypothetical_deductions
+        - applied_hypothetical_ss
     )
 
     total_employer_cost = (
@@ -546,5 +563,7 @@ def calculate_final_employer_cost(
         "total_employer_cost_gbp": total_employer_cost,
         "cost_multiple": cost_multiple,
         "is_final": False,
+        "applied_hypothetical_swiss_income_tax_gbp": applied_hypothetical_tax,
+        "applied_hypothetical_swiss_social_security_gbp": applied_hypothetical_ss,
     }
 

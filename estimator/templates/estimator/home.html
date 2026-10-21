@@ -1,9 +1,40 @@
+{% load static humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'estimator/style.css' %}">
     <title>Assignment Cost Estimator</title>
+    <style>
+        /* Expandable source sections inside Cost Estimate methodology */
+        #cost-estimate .source-details {
+            margin: 20px 0;
+            border: 1px solid #d8e2f0;
+            border-radius: 10px;
+            background: #f8faff;
+            overflow: hidden;
+        }
+        #cost-estimate .source-details > summary {
+            padding: 16px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #17366d;
+        }
+        #cost-estimate .source-details > summary:hover {
+            background: #edf3ff;
+        }
+        #cost-estimate .source-details[open] > summary {
+            border-bottom: 1px solid #d8e2f0;
+        }
+        #cost-estimate .source-details-content {
+            padding: 16px 20px 20px;
+        }
+        #cost-estimate .source-details-content a {
+            overflow-wrap: anywhere;
+        }
+    </style>
 </head>
 
 <body>
@@ -15,723 +46,194 @@
     </header>
 
     <main>
-        <nav aria-label="Estimator sections">
-            <a href="#cost-estimate">Cost Estimate</a>
-            <a href="#immigration">Immigration</a>
+
+        <nav class="tab-navigation" role="tablist" aria-label="Estimator sections">
+            <button
+                type="button"
+                class="tab-button active"
+                id="cost-tab"
+                role="tab"
+                aria-controls="cost-estimate"
+                aria-selected="true"
+                onclick="showTab('cost-estimate')">
+                Cost Estimate
+            </button>
+
+            <button
+                type="button"
+                class="tab-button"
+                id="immigration-tab"
+                role="tab"
+                aria-controls="immigration"
+                aria-selected="false"
+                onclick="showTab('immigration')">
+                Immigration
+            </button>
         </nav>
 
-        <section id="cost-estimate">
+
+        <section id="cost-estimate" class="tab-content" role="tabpanel" aria-labelledby="cost-tab">
             <h2>Cost Estimate</h2>
             <p>
                 Enter the employee's assignment details to calculate the employer's costs.
             </p>
-            <form method="POST">
+            <form method="POST" class="assignment-form">
                 {% csrf_token %}
                 {{ form.non_field_errors }}
 
-
-                {% for field in form %}
-                    <div>
-                        {{ field.label_tag }}
-                        {{ field }}
-
-                        {% if field.errors %}
-                            <div role="alert">
-                                {{ field.errors }}
-                            </div>
-                        {% endif %}
+                <fieldset class="form-section">
+                    <legend>Employee & Location Details</legend>
+                    <div class="form-grid">
+                        {% for field in form %}
+                            {% if field.name == "nationality" or field.name == "years_employed" or field.name == "home_country" or field.name == "home_city" or field.name == "host_country" or field.name == "host_city" %}
+                                <div class="form-field">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div role="alert">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                {% endfor %}
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Assignment Dates</legend>
+                    <div class="form-grid">
+                        {% for field in form %}
+                            {% if field.name == "start_date" or field.name == "end_date" %}
+                                <div class="form-field">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div role="alert">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Compensation</legend>
+                    <div class="form-grid">
+                        {% for field in form %}
+                            {% if field.name == "base_salary" or field.name == "bonus" %}
+                                <div class="form-field">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div role="alert">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Assignment Benefits & Exchange Rate</legend>
+                    <div class="form-grid">
+                        {% for field in form %}
+                            {% if field.name == "housing" or field.name == "relocation" or field.name == "moving_costs" or field.name == "temporary_housing" or field.name == "exchange_rate" %}
+                                <div class="form-field">
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div role="alert">{{ field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </fieldset>
 
                 <button type="submit">Calculate Assignment Cost</button>
             </form>
 
             {% if assignment_data %}
                 <h3>Submitted Assignment Details</h3>
-                <table>
-                    <tbody>
-                        {% for key, value in assignment_data.items %}
-                            <tr>
-                                <th scope="row">{{ key }}</th>
-                                <td>{{ value }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <p>
+                        Review the assignment information used to calculate
+                        the employer cost estimate.
+                    </p>
+
+                    <table>
+                        <tbody>
+                            {% for field in form %}
+                                <tr>
+                                    <th scope="row">{{ field.label }}</th>
+                                    <td>
+                                        {% if field.field.choices %}
+                                            {% for option_value, option_label in field.field.choices %}
+                                                {% if option_value|stringformat:"s" == field.value|stringformat:"s" %}
+                                                    {{ option_label }}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ field.value }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                <!-- </details> -->
             {% endif %}
 
             {% if results %}
                 <hr>
-                
-                <h2>Assignment Cost Breakdown</h2>
-                
-                <h3>Annual Home Pay</h3>
-                <p>Salary and Bonus: £{{ results.home_pay.total_home_pay_gbp|floatformat:2 }}</p>
-                
-                <h3>Year 1 Benefits and Tax Treatment</h3>
+
+                <h2>Assignment Cost Overview</h2>
                 <p>
-                    Housing: taxable benefit-in-kind, subject to HMRC valuation rules.
-                    Relocation allowance: taxable cash.
-                    Moving costs and temporary housing: potentially exempt
-                    relocation expenses, subject to eligibility and the
-                    combined £8,000 limit.
+                    Estimated employer costs for the two-year
+                    international assignment.
                 </p>
 
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Benefit</th>
-                            <th scope="col">Employer Cost</th>
-                            <th scope="col">UK Tax Treatment</th>
-                        </tr>
-                    </thead>
-                    
-                    <tbody>
-                        <tr>
-                            <th scope="row">Housing</th>
-                            <td>£{{ results.year_1_benefits.housing|floatformat:2 }}</td>
-                            <td>{{ results.year_1_benefits.tax_treatment.housing }}</td>
-                        </tr>
-
-                        <tr>
-                            <th scope="row">Relocation Allowance</th>
-                            <td>£{{ results.year_1_benefits.relocation|floatformat:2 }}</td>
-                            <td>{{ results.year_1_benefits.tax_treatment.relocation }}</td>
-                        </tr>
-
-                        <tr>
-                            <th scope="row">Moving Costs</th>
-                            <td>£{{ results.year_1_benefits.moving_costs|floatformat:2 }}</td>
-                            <td>{{ results.year_1_benefits.tax_treatment.moving_costs }}</td>
-                        </tr>
-
-                        <tr>
-                            <th scope="row">Temporary Housing</th>
-                            <td>£{{ results.year_1_benefits.temporary_housing|floatformat:2 }}</td>
-                            <td>{{ results.year_1_benefits.tax_treatment.temporary_housing }}</td>
-                        </tr>
-
-                        <tr>
-                            <th scope="row">Total Year 1 Benefits</th>
-                            <td>
-                                <strong> £{{ results.year_1_benefits.total|floatformat:2 }} </strong>
-                            </td>
-                            <td>Before tax calculations</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <h3>Year 2 Benefits</h3>                
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Benefit</th>
-                            <th scope="col">Employer Cost</th>
-                            <th scope="col">UK Tax Treatment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row">Housing</th>
-                            <td>
-                                £{{ results.year_2_benefits.housing|floatformat:2 }}
-                            </td>
-                            <td>
-                                {{ results.year_2_benefits.tax_treatment.housing }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Total Year 2 Benefits</th>
-                            <td>
-                                <strong>
-                                    £{{ results.year_2_benefits.total|floatformat:2 }}
-                                </strong>
-                            </td>
-                            <td>Before tax calculations</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <em>
-                        These figures show salary and direct assignment benefits 
-                        before UK taxes, employer charges, and hypothetical Swiss deductions. They are not final employer costs.
-                    </em>
-                </p>
-
-                
-                <h3>Hypothetical Swiss Social Security</h3>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Deduction</th>
-                            <th scope="col">Annual Amount (CHF)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row">AHV/IV/EO</th>
-                            <td>
-                                CHF {{ results.hypothetical_social_security.ahv_iv_eo_chf|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Unemployment Insurance</th>
-                            <td>
-                                CHF {{ results.hypothetical_social_security.alv_chf|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Total Hypothetical Social Security</th>
-                            <td>
-                                <strong>
-                                    CHF {{ results.hypothetical_social_security.total_chf|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    Equivalent annual deduction:
-                    <strong>
-                        £{{ results.hypothetical_social_security.total_gbp|floatformat:2 }}
-                    </strong>
-                </p>
-
-                <p>
-                    <em>
-                        Hypothetical Swiss income tax is calculated separately below. 
-                        Both employee deductions will be considered when determining 
-                        protected net home pay.
-                    </em>
-                </p>
-                
-                <h4>Swiss Social Security Rates and Sources</h4>
-
-                <p>
-                    The hypothetical employee social security calculation
-                    includes the following Swiss contributions:
-                </p>
-
-                <ul>
-                    <li>
-                        <strong>AHV/IV/EO:</strong>
-                        5.3% of gross employment income.
-                    </li>
-                    <li>
-                        <strong>ALV (unemployment insurance):</strong>
-                        1.1% of employment income up to the assumed
-                        annual contribution ceiling of CHF 148,200.
-                    </li>
-                </ul>
-
-                <p>
-                    The employer contribution estimate applies the
-                    corresponding employer rates for AHV/IV/EO and ALV.
-                </p>
-
-                <p>
-                    <strong>Official sources:</strong>
-                    <a href="https://www.ahv-iv.ch/en/"
-                    target="_blank" rel="noopener noreferrer">
-                        Swiss Information Centre AHV/IV
-                    </a>
-                    |
-                    <a href="https://www.bsv.admin.ch/"
-                    target="_blank" rel="noopener noreferrer">
-                        Swiss Federal Social Insurance Office
-                    </a>
-                </p>
-
-                <p>
-                    <small>
-                        This model excludes occupational pension (BVG),
-                        accident insurance, family allowance contributions,
-                        and administrative charges. The contribution ceiling,
-                        applicable rates and cross-border coverage must be
-                        verified for the assignment period.
-                    </small>
-                </p>
-
-                
-                <h3>Hypothetical Swiss Income Tax</h3>
-
-                <p>
-                    Provisional annual Swiss income tax based on
-                    the employee's salary and bonus.
-                </p>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tax Component</th>
-                            <th>Annual Amount (CHF)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Federal Income Tax</td>
-                            <td>CHF {{ results.hypothetical_swiss_tax.federal_tax_chf|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <td>Zurich Cantonal Tax</td>
-                            <td>CHF {{ results.hypothetical_swiss_tax.cantonal_tax_chf|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <td>Zurich Municipal Tax</td>
-                            <td>CHF {{ results.hypothetical_swiss_tax.municipal_tax_chf|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <td>Personal Tax</td>
-                            <td>CHF {{ results.hypothetical_swiss_tax.personal_tax_chf|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Total Swiss Income Tax</strong></td>
-                            <td>
-                                <strong>CHF {{ results.hypothetical_swiss_tax.total_tax_chf|floatformat:2 }}</strong>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Equivalent in GBP</strong></td>
-                            <td>
-                                <strong>£{{ results.hypothetical_swiss_tax.total_tax_gbp|floatformat:2 }}</strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <em>
-                        Provisional hypothetical Swiss income tax for tax equalisation.
-                        Deduction assumptions require verification.
-                        This is not an additional employer expense.
-                    </em>
-                </p>
-
-                <h4>Swiss Income Tax Methodology and Sources</h4>
-
-                <p>
-                    Hypothetical Swiss income tax is estimated for a single
-                    employee living in Zurich, Switzerland, using the
-                    employee's annual salary and bonus.
-                </p>
-
-                <p>
-                    The estimate includes:
-                </p>
-
-                <ul>
-                    <li>
-                        <strong>Direct federal tax:</strong>
-                        calculated using progressive Swiss federal income
-                        tax brackets.
-                    </li>
-
-                    <li>
-                        <strong>Zurich cantonal tax:</strong>
-                        calculated using the assumed Zurich cantonal
-                        tax schedule and multiplier.
-                    </li>
-
-                    <li>
-                        <strong>Zurich municipal tax:</strong>
-                        calculated using the assumed City of Zurich
-                        municipal multiplier.
-                    </li>
-
-                    <li>
-                        <strong>Personal tax:</strong>
-                        an assumed annual charge of CHF 24.
-                    </li>
-                </ul>
-
-                <p>
-                    Swiss employee AHV/IV/EO and unemployment insurance
-                    contributions are calculated separately and deducted
-                    when estimating taxable income.
-                </p>
-
-                <p>
-                    <strong>Important assumption:</strong>
-                    The model uses simplified employment expense deductions.
-                    It does not represent a complete Swiss tax return.
-                    Additional deductions, individual circumstances and
-                    official rounding rules may affect the final tax amount.
-                </p>
-
-                <p>
-                    <strong>Employment expense deduction:</strong>
-                    The model applies CHF 4,000 annually as a general
-                    employment expense allowance. The published 2026
-                    Zurich tax parameters specify 3% of qualifying
-                    net salary, subject to a CHF 2,000 minimum and
-                    CHF 4,000 maximum.
-                </p>
-
-                <p>
-                    <strong>Official 2026 source:</strong>
-                    <a href="https://www.zh.ch/de/steuern-finanzen/steuern/treuhaender/steuerbuch/steuerbuch-definition/zstb-26-1.html"
-                    target="_blank" rel="noopener noreferrer">
-                        Canton of Zurich - Employment Expense Rules 2026
-                    </a>
-                </p>
-
-                <p>
-                    <small>
-                        This confirms the general expense allowance,
-                        not the completeness of the employee's taxable
-                        income calculation. Other deductions remain
-                        outside the simplified estimate.
-                    </small>
-                </p>
-
-                <p>
-                    <strong>Official Swiss tax sources:</strong>
-                </p>
-
-                <ul>
-                    <li>
-                        <a href="https://www.estv.admin.ch/"
-                        target="_blank" rel="noopener noreferrer">
-                            Swiss Federal Tax Administration (FTA)
-                        </a>
-                        - federal income tax guidance and tax calculators.
-                    </li>
-
-                    <li>
-                        <a href="https://www.zh.ch/de/steuern-finanzen/steuern.html"
-                        target="_blank" rel="noopener noreferrer">
-                            Canton of Zurich - Tax Administration
-                        </a>
-                        - cantonal tax information and tax rates.
-                    </li>
-
-                    <li>
-                        <a href="https://www.stadt-zuerich.ch/"
-                        target="_blank" rel="noopener noreferrer">
-                            City of Zurich
-                        </a>
-                        - municipal tax information.
-                    </li>
-                </ul>
-
-                <p>
-                    <small>
-                        These sources identify the relevant tax authorities.
-                        The numerical estimate remains provisional until
-                        the applicable tax schedules, multipliers and
-                        deductions have been verified against their
-                        published rules or official calculators.
-                    </small>
-                </p>
-
-
-                
-                <h3>Home Pay After Hypothetical Social Security</h3>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Annual Amount (GBP)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Gross Home Pay</td>
-                            <td>
-                                £{{ results.pay_after_social_security.annual_home_pay_gbp|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Less: Hypothetical Swiss Social Security</td>
-                            <td>
-                                -£{{ results.pay_after_social_security.hypothetical_social_security_gbp|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Pay After Social Security</strong></td>
-                            <td>
-                                <strong>
-                                    £{{ results.pay_after_social_security.pay_after_social_security_gbp|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <em>
-                        This is an intermediate calculation. Hypothetical Swiss
-                        income tax has not yet been deducted, so this is not
-                        the employee's final protected net home pay.
-                    </em>
-                </p>
-
-
-                <h3>Provisional Protected Net Home Pay</h3>
-
-                <p>
-                    This is the employee's estimated annual home pay
-                    after hypothetical Swiss social security and income tax.
-                </p>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Annual Amount (GBP)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Gross Home Pay (Salary + Bonus)</td>
-                            <td>
-                                £{{ results.protected_net_home_pay.gross_home_pay_gbp|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>Less: Hypothetical Swiss Social Security</td>
-                            <td>
-                                -£{{ results.protected_net_home_pay.hypothetical_social_security_gbp|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>Less: Hypothetical Swiss Income Tax</td>
-                            <td>
-                                -£{{ results.protected_net_home_pay.hypothetical_swiss_income_tax_gbp|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td><strong>Protected Net Home Pay</strong></td>
-                            <td>
-                                <strong>
-                                    £{{ results.protected_net_home_pay.protected_net_home_pay_gbp|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <em>
-                        This is a provisional tax-equalisation calculation.
-                        It represents the employee's estimated protected annual
-                        net home pay, excluding separate assignment benefits.
-                        Swiss tax assumptions require verification.
-                    </em>
-                </p>
-                
-                <h3>UK Income Tax Gross-Up</h3>
-
-                <p>
-                    UK income tax is calculated iteratively because
-                    employer-paid UK tax is itself taxable.
-                </p>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Calculation</th>
-                            <th>Year 1</th>
-                            <th>Year 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Taxable Income Before Gross-Up</td>
-                            <td>£{{ results.year_1_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
-                            <td>£{{ results.year_2_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <td>Employer-Paid UK Income Tax (Grossed Up)</td>
-                            <td><strong>£{{ results.year_1_uk_tax_gross_up|floatformat:2 }}</strong></td>
-                            <td><strong>£{{ results.year_2_uk_tax_gross_up|floatformat:2 }}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <small>
-                        Provisional estimate using the assignment's specified
-                        gross-up methodology. Taxable benefit valuations and
-                        social security treatment require verification.
-                    </small>
-                </p>
-
-                
-                <h4>UK Income Tax Rules and Sources</h4>
-
-                <p>
-                    The estimate uses the England income tax rules for
-                    the 2026/27 tax year, applied to both assignment years
-                    as a modelling assumption.
-                </p>
-
-                <ul>
-                    <li>
-                        Personal allowance: £12,570, reduced by £1 for
-                        every £2 of adjusted net income above £100,000.
-                    </li>
-                    <li>
-                        Basic rate: 20% on the first £37,700 of taxable income.
-                    </li>
-                    <li>
-                        Higher rate: 40% on taxable income above the basic-rate
-                        band, up to the additional-rate threshold.
-                    </li>
-                    <li>
-                        Additional rate: 45% on taxable income above £125,140.
-                    </li>
-                    <li>
-                        Employer-paid UK income tax is grossed up iteratively
-                        because the employer's tax payment is treated as
-                        additional taxable income under the model.
-                    </li>
-                </ul>
-
-                <p>
-                    <strong>Official sources:</strong>
-                    <a href="https://www.gov.uk/income-tax-rates"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK- Income Tax rates and allowances
-                    </a>
-                    |
-                    <a href="https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Rates and thresholds for employers 2026/27
-                    </a>
-                </p>
-
-                <p>
-                    <small>
-                        The second assignment year uses the same tax parameters
-                        for comparison. Actual 2027/28 rules should be checked
-                        when available. The gross-up follows the methodology
-                        specified in the assignment brief.
-                    </small>
-                </p>
-
-                <h3>Applicable Social Security System</h3>
-
-                <div class="social-security-explanation">
-
-                    <p>
-                        <strong>Applicable Country:</strong> Switzerland
-                    </p>
-
-                    <p>
-                        <strong>Reason:</strong>
-                        The employee normally works in Switzerland and is
-                        temporarily assigned by their Swiss employer to its
-                        UK subsidiary for two years.
-                    </p>
-
-                    <p>
-                        Under the UK–Switzerland social security coordination
-                        arrangements, an eligible employee posted to the UK
-                        for up to 24 months can generally remain covered by
-                        Swiss social security.
-                    </p>
-
-                    <p>
-                        <strong>Certificate Requirement:</strong>
-                        The employer must arrange the appropriate Swiss
-                        certificate of coverage to demonstrate that the
-                        employee remains insured in Switzerland.
-                    </p>
-
-                    <p>
-                        <strong>Employer Contribution Treatment:</strong>
-                        Swiss employer AHV/IV/EO and unemployment insurance
-                        (ALV) contributions are included in this estimate.
-                        UK employer National Insurance is assumed to be £0
-                        while valid Swiss coverage applies.
-                    </p>
-
-                    <p>
-                        <strong>Important Assumption:</strong>
-                        This calculation assumes the employee qualifies
-                        for temporary posting rules and obtains the
-                        required certificate of coverage. Otherwise,
-                        UK National Insurance obligations may need
-                        to be reassessed.
-                    </p>
-
-                    <p>
-                        <strong>Official Source:</strong>
-                        <a
-                            href="https://www.gov.uk/guidance/social-security-contributions-for-workers-coming-to-the-uk-from-the-eea-or-switzerland"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            GOV.UK - Social security contributions for
-                            workers coming to the UK from Switzerland
-                        </a>
-                    </p>
+                <div class="results-summary">
+
+                    <div class="summary-card">
+                        <p class="summary-label">Year 1 Cost</p>
+                        <h3>
+                            £{{ results.year_1_final_cost.total_employer_cost_gbp|floatformat:2|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="summary-card">
+                        <p class="summary-label">Year 2 Cost</p>
+                        <h3>
+                            £{{ results.year_2_final_cost.total_employer_cost_gbp|floatformat:2|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="summary-card">
+                        <p class="summary-label">Total Assignment Cost</p>
+                        <h3>
+                            £{{ results.final_two_year_total|floatformat:2|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="summary-card">
+                        <p class="summary-label">Cost Multiple</p>
+                        <h3>
+                            {% if results.final_two_year_multiple is not None %}
+                                {{ results.final_two_year_multiple|floatformat:2 }}x
+                            {% else %}
+                            N/A
+                            {% endif %}
+                            <!-- {{ results.final_two_year_multiple|floatformat:2 }}× -->
+                        </h3>
+                    </div>
 
                 </div>
 
-
-                <h3>Employer Social Security Contributions</h3>
-
-                <p>
-                    This estimate assumes the employee remains covered by
-                    Swiss social security during the temporary UK assignment,
-                    subject to the applicable posting conditions and
-                    certificate of coverage.
+                <p class="summary-note">
+                    Provisional estimates based on the stated tax,
+                    social security and benefit assumptions.
                 </p>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Contribution</th>
-                            <th>Annual Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Swiss Employer AHV/IV/EO</td>
-                            <td>
-                                CHF {{ results.swiss_employer_social_security.ahv_iv_eo_chf|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Swiss Employer ALV</td>
-                            <td>
-                                CHF {{ results.swiss_employer_social_security.alv_chf|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Total Swiss Employer Contributions</td>
-                            <td>
-                                CHF {{ results.swiss_employer_social_security.total_chf|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Annual Employer Contributions (GBP)</strong></td>
-                            <td>
-                                <strong>£{{ results.swiss_employer_social_security_gbp|floatformat:2 }}</strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <small>
-                        UK employer National Insurance is assumed not to apply
-                        while valid Swiss coverage continues. This estimate
-                        excludes other potentially applicable Swiss employer
-                        contributions and insurance costs.
-                    </small>
-                </p>
-
+                
                 <h2>Assignment Employer Cost Estimate</h2>
 
                 <p>
@@ -765,11 +267,6 @@
                             <th colspan="3">2. Assignment Benefits</th>
                         </tr>
 
-                        <tr>
-                            <td>Total Assignment Benefits</td>
-                            <td>£{{ results.year_1_final_cost.assignment_benefits_gbp|floatformat:2 }}</td>
-                            <td>£{{ results.year_2_final_cost.assignment_benefits_gbp|floatformat:2 }}</td>
-                        </tr>
                         
                         <tr>
                             <td>
@@ -806,6 +303,11 @@
                             <td>£{{ results.year_1_benefits.temporary_housing|floatformat:2 }}</td>
                             <td>£{{ results.year_2_benefits.temporary_housing|floatformat:2 }}</td>
                         </tr>
+                        <tr>
+                            <td> <strong> Total Assignment Benefits </strong> </td>
+                            <td> <strong> £{{ results.year_1_final_cost.assignment_benefits_gbp|floatformat:2 }} </strong> </td>
+                            <td> <strong> £{{ results.year_2_final_cost.assignment_benefits_gbp|floatformat:2 }} </strong> </td>
+                        </tr>
 
 
                         <!-- SECTION 3: HOST TAX AND EMPLOYER CHARGES -->
@@ -834,8 +336,8 @@
 
                         <tr>
                             <td>Hypothetical Swiss Income Tax</td>
-                            <td>-£{{ results.year_1_final_cost.hypothetical_swiss_income_tax_gbp|floatformat:2 }}</td>
-                            <td>-£{{ results.year_2_final_cost.hypothetical_swiss_income_tax_gbp|floatformat:2 }}</td>
+                            <td>-£{{ results.year_1_final_cost.applied_hypothetical_swiss_income_tax_gbp|floatformat:2 }}</td>
+                            <td>-£{{ results.year_2_final_cost.applied_hypothetical_swiss_income_tax_gbp|floatformat:2 }}</td>
                         </tr>
 
                         <tr>
@@ -853,24 +355,42 @@
 
                         <tr>
                             <td>Cost as Multiple of Annual Home Pay</td>
-                            <td>{{ results.year_1_final_cost.cost_multiple|floatformat:2 }}×</td>
-                            <td>{{ results.year_2_final_cost.cost_multiple|floatformat:2 }}×</td>
+                            <td>
+                                {% if results.year_1_final_cost.cost_multiple is not None %}
+                                    {{ results.year_1_final_cost.cost_multiple|floatformat:2 }}x
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if results.year_2_final_cost.cost_multiple is not None %}
+                                    {{ results.year_2_final_cost.cost_multiple|floatformat:2 }}x
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <h3>Two-Year Assignment Total</h3>
+                <h3>
+                    <p>
+                        <strong>
+                            £{{ results.final_two_year_total|floatformat:2 }}
+                        </strong>
+                    </p>
+                </h3>
 
-                <p>
-                    <strong>
-                        £{{ results.final_two_year_total|floatformat:2 }}
-                    </strong>
-                </p>
-
+                
                 <p>
                     Total cost as a multiple of two years of home pay:
                     <strong>
-                        {{ results.final_two_year_multiple|floatformat:2 }}×
+                        {% if results.final_two_year_multiple != None %}
+                            {{ results.final_two_year_multiple|floatformat:2 }}×
+                        {% else %}
+                            N/A
+                        {% endif %}
                     </strong>
                 </p>
 
@@ -883,358 +403,1081 @@
                         Additional employer charges may apply.
                     </small>
                 </p>
-                
-                <h3>UK Relocation Expense Relief</h3>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Year 1</th>
-                            <th>Year 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Qualifying Relocation Expenses (Assumed)</td>
-                            <td>
-                                £{{ results.year_1_relocation_relief.total_qualifying_costs|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_relocation_relief.total_qualifying_costs|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Potentially Exempt Expenses</td>
-                            <td>
-                                £{{ results.year_1_relocation_relief.exempt_amount|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_relocation_relief.exempt_amount|floatformat:2 }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Potentially Taxable Expenses</strong></td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_1_relocation_relief.potentially_taxable_amount|floatformat:2 }}
-                                </strong>
-                            </td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_2_relocation_relief.potentially_taxable_amount|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
 
-                <p>
-                    <em>
-                        Assumes the moving and temporary accommodation
-                        expenses qualify for UK relocation relief.
-                        The combined exemption is limited to £8,000.
-                        Actual eligibility must be verified.
-                    </em>
-                </p>
-                
-                <h4>Relocation Relief - HMRC Rules</h4>
+                <details class="calculation-details">
+                    <summary>
+                        <span>Detailed Calculations and Tax Methodology</span>
+                        <span class="expand-hint">Click to expand</span>
+                    </summary>
 
-                <p>
-                    HMRC allows qualifying relocation expenses and benefits
-                    to be exempt from tax up to a combined limit of £8,000,
-                    subject to eligibility conditions.
-                </p>
+                    <div class="calculation-details-content">
 
-                <p>
-                    For this assignment, the employer pays £6,000 in moving
-                    costs and £4,000 for temporary accommodation.
-                    The model assumes both qualify for relocation relief.
-                </p>
+                        <h2>Assignment Cost Breakdown</h2>
 
-                <ul>
-                    <li>Total relocation expenses: £10,000.</li>
-                    <li>Assumed tax-exempt amount: £8,000.</li>
-                    <li>Potentially taxable excess: £2,000.</li>
-                </ul>
+                        <h3>Annual Home Pay</h3>
+                        <p>Salary and Bonus: £{{ results.home_pay.total_home_pay_gbp|floatformat:2 }}</p>
+                        
+                        <h3>Year 1 Benefits and Tax Treatment</h3>
+                        <p>
+                            Housing: taxable benefit-in-kind, subject to HMRC valuation rules.
+                            Relocation allowance: taxable cash.
+                            Moving costs and temporary housing: potentially exempt
+                            relocation expenses, subject to eligibility and the
+                            combined £8,000 limit.
+                        </p>
 
-                <p>
-                    The CHF 5,000 cash relocation allowance is treated
-                    separately as taxable cash.
-                </p>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Benefit</th>
+                                    <th scope="col">Employer Cost</th>
+                                    <th scope="col">UK Tax Treatment</th>
+                                </tr>
+                            </thead>
+                            
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Housing</th>
+                                    <td>£{{ results.year_1_benefits.housing|floatformat:2 }}</td>
+                                    <td>{{ results.year_1_benefits.tax_treatment.housing }}</td>
+                                </tr>
 
-                <p>
-                    <strong>Official HMRC source:</strong>
-                    <a href="https://www.gov.uk/expenses-and-benefits-relocation"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Expenses and benefits: relocation
-                    </a>
-                </p>
+                                <tr>
+                                    <th scope="row">Relocation Allowance</th>
+                                    <td>£{{ results.year_1_benefits.relocation|floatformat:2 }}</td>
+                                    <td>{{ results.year_1_benefits.tax_treatment.relocation }}</td>
+                                </tr>
 
-                <p>
-                    <small>
-                        The exemption is conditional. The employer must
-                        verify that the expenses qualify and satisfy
-                        the applicable HMRC requirements.
-                    </small>
-                </p>
+                                <tr>
+                                    <th scope="row">Moving Costs</th>
+                                    <td>£{{ results.year_1_benefits.moving_costs|floatformat:2 }}</td>
+                                    <td>{{ results.year_1_benefits.tax_treatment.moving_costs }}</td>
+                                </tr>
 
-                
-                <h3>UK Taxable Assignment Benefits</h3>
+                                <tr>
+                                    <th scope="row">Temporary Housing</th>
+                                    <td>£{{ results.year_1_benefits.temporary_housing|floatformat:2 }}</td>
+                                    <td>{{ results.year_1_benefits.tax_treatment.temporary_housing }}</td>
+                                </tr>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Year 1</th>
-                            <th>Year 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Taxable Cash Relocation Allowance</td>
-                            <td>
-                                £{{ results.year_1_taxable_benefits.taxable_cash|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_taxable_benefits.taxable_cash|floatformat:2 }}
-                            </td>
-                        </tr>
+                                <tr>
+                                    <th scope="row">Total Year 1 Benefits</th>
+                                    <td>
+                                        <strong> £{{ results.year_1_benefits.total|floatformat:2 }} </strong>
+                                    </td>
+                                    <td>Before tax calculations</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>Year 2 Benefits</h3>                
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Benefit</th>
+                                    <th scope="col">Employer Cost</th>
+                                    <th scope="col">UK Tax Treatment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Housing</th>
+                                    <td>
+                                        £{{ results.year_2_benefits.housing|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        {{ results.year_2_benefits.tax_treatment.housing }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Total Year 2 Benefits</th>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_2_benefits.total|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                    <td>Before tax calculations</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <tr>
-                            <td>Potentially Taxable Relocation Expenses</td>
-                            <td>
-                                £{{ results.year_1_taxable_benefits.taxable_relocation_expenses|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_taxable_benefits.taxable_relocation_expenses|floatformat:2 }}
-                            </td>
-                        </tr>
+                        <p>
+                            <em>
+                                <small>
+                                    These figures show salary and direct assignment benefits 
+                                    before UK taxes, employer charges, and hypothetical Swiss deductions. They are not final employer costs.
+                                </small> 
+                            </em>
+                        </p>
 
-                        <tr>
-                            <td><strong>Known Taxable Benefits (Provisional)</strong></td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_1_taxable_benefits.known_taxable_amount|floatformat:2 }}
-                                </strong>
-                            </td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_2_taxable_benefits.known_taxable_amount|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
+                        
+                        <h3>Hypothetical Swiss Social Security</h3>
 
-                        <tr>
-                            <td>Employer-Paid Housing Cost</td>
-                            <td>
-                                £{{ results.year_1_taxable_benefits.housing_employer_cost|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_taxable_benefits.housing_employer_cost|floatformat:2 }}
-                            </td>
-                        </tr>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Deduction</th>
+                                    <th scope="col">Annual Amount (CHF)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">AHV/IV/EO</th>
+                                    <td>
+                                        CHF {{ results.hypothetical_social_security.ahv_iv_eo_chf|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Unemployment Insurance (AHV) </th>
+                                    <td>
+                                        CHF {{ results.hypothetical_social_security.alv_chf|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Total Hypothetical Social Security</th>
+                                    <td>
+                                        <strong>
+                                            CHF {{ results.hypothetical_social_security.total_chf|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <tr>
-                            <td>Housing Taxable Benefit Value</td>
-                            <td>To be determined</td>
-                            <td>To be determined</td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <p>
+                            Equivalent annual deduction:
+                            <strong>
+                                £{{ results.hypothetical_social_security.total_gbp|floatformat:2 }}
+                            </strong>
+                        </p>
 
-                <p>
-                    <em>
-                        Taxable benefits are provisional. The taxable
-                        value of employer-provided accommodation has
-                        not yet been determined under HMRC rules.
-                        Relocation relief assumes qualifying expenses.
-                    </em>
-                </p>
-                
-                <h3>Employer-Provided Accommodation Assessment</h3>
+                        <p>
+                            <em>
+                                <small>
+                                    Hypothetical Swiss income tax is calculated separately below. 
+                                    Both employee deductions will be considered when determining 
+                                    protected net home pay.
+                                </small>
+                                
+                            </em>
+                        </p>
+                        
+                        <details class="source-details">
+                            <summary>Swiss Social Security Rates and Sources</summary>
+                            <div class="source-details-content">
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Year 1</th>
-                            <th>Year 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Annual Employer Housing Cost</td>
-                            <td>
-                                £{{ results.year_1_accommodation.annual_employer_cost|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_accommodation.annual_employer_cost|floatformat:2 }}
-                            </td>
-                        </tr>
+                        <p>
+                            The hypothetical employee social security calculation
+                            includes the following Swiss contributions:
+                        </p>
 
-                        <tr>
-                            <td>Employee Contribution</td>
-                            <td>
-                                £{{ results.year_1_accommodation.employee_contribution|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_accommodation.employee_contribution|floatformat:2 }}
-                            </td>
-                        </tr>
+                        <ul>
+                            <li>
+                                <strong>AHV/IV/EO:</strong>
+                                5.3% of gross employment income.
+                            </li>
+                            <li>
+                                <strong>Unemployment Insurance (ALV):</strong>
+                                1.1% of employment income up to the assumed
+                                annual contribution ceiling of CHF 148,200.
+                            </li>
+                        </ul>
 
-                        <tr>
-                            <td>Taxable Accommodation Benefit</td>
-                            <td>
-                                {{ results.year_1_accommodation.valuation_status }}
-                            </td>
-                            <td>
-                                {{ results.year_2_accommodation.valuation_status }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <p>
+                            The employer contribution estimate applies the
+                            corresponding employer rates for AHV/IV/EO and ALV.
+                        </p>
 
-                <p>
-                    <em>
-                        Housing is assumed to be rented by the employer
-                        for this preliminary assessment. The tenancy
-                        arrangement and any applicable exemptions
-                        must be verified.
-                    </em>
-                </p>
+                        <p>
+                            <strong>Official sources:</strong>
+                            <a href="https://www.ahv-iv.ch/de/Merkbl%C3%A4tter/Beitr%C3%A4ge-AHV-IV-EO-ALV"
+                            target="_blank" rel="noopener noreferrer">
+                                Swiss Information Centre AHV/IV
+                            </a>
+                            |
+                            <a href="https://www.ahv-iv.ch/en/Social-insurances/Other-types-of-social-insurances/Unemployment-insurance-ALV"
+                            target="_blank" rel="noopener noreferrer">
+                                Unemployment Insurance ALV
+                            </a>
+                        </p>
 
-                <p>
-                    <strong>Source:</strong>
-                    <a href="https://www.gov.uk/expenses-and-benefits-accommodation"
-                    target="_blank"
-                    rel="noopener noreferrer">
-                        GOV.UK - Expenses and benefits: accommodation
-                    </a>
-                </p>
+                        <p>
+                            <small>
+                                This model excludes occupational pension (BVG),
+                                accident insurance, family allowance contributions,
+                                and administrative charges. The contribution ceiling,
+                                applicable rates and cross-border coverage must be
+                                verified for the assignment period.
+                            </small>
+                        </p>
 
-                
-                <h4>Accommodation Benefit - HMRC Rules</h4>
+                        
+                        </details>
 
-                <p>
-                    Employer-provided living accommodation can create
-                    a taxable benefit in kind. Its taxable value depends
-                    on the accommodation arrangement, relevant costs,
-                    employee contributions and any applicable exemptions.
-                </p>
+                        
+                        <h3>Home Pay After Hypothetical Social Security in GBP</h3>
 
-                <p>
-                    The employer's annual housing cost is £36,000.
-                    For this preliminary model, the taxable accommodation
-                    value is also assumed to be £36,000.
-                </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Annual Amount (GBP)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Gross Home Pay</td>
+                                    <td>
+                                        £{{ results.pay_after_social_security.annual_home_pay_gbp|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Less: Hypothetical Swiss Social Security</td>
+                                    <td>
+                                        -£{{ results.pay_after_social_security.hypothetical_social_security_gbp|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pay After Social Security</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.pay_after_social_security.pay_after_social_security_gbp|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                <p>
-                    <strong>This is a modelling assumption, not a confirmed
-                    HMRC valuation.</strong> A different taxable value would
-                    change the UK income tax gross-up and total employer cost.
-                </p>
-
-                <p>
-                    <strong>Official HMRC source:</strong>
-                    <a href="https://www.gov.uk/expenses-and-benefits-accommodation"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Expenses and benefits: accommodation
-                    </a>
-                </p>
-
-                
-                <h3>Total Assumed UK Taxable Benefits</h3>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Year 1</th>
-                            <th>Year 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Relocation-Related Taxable Amounts</td>
-                            <td>
-                                £{{ results.year_1_total_taxable_benefits.known_taxable_amount|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_total_taxable_benefits.known_taxable_amount|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>Assumed Taxable Accommodation</td>
-                            <td>
-                                £{{ results.year_1_total_taxable_benefits.housing_taxable_value|floatformat:2 }}
-                            </td>
-                            <td>
-                                £{{ results.year_2_total_taxable_benefits.housing_taxable_value|floatformat:2 }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td><strong>Total Assumed Taxable Benefits</strong></td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_1_total_taxable_benefits.total_taxable_benefits|floatformat:2 }}
-                                </strong>
-                            </td>
-                            <td>
-                                <strong>
-                                    £{{ results.year_2_total_taxable_benefits.total_taxable_benefits|floatformat:2 }}
-                                </strong>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <p>
-                    <em>
-                        These figures are provisional modelling assumptions.
-                        Accommodation valuation and relocation relief require
-                        verification against HMRC rules.
-                    </em>
-                </p>
+                        <p>
+                            <em>
+                                <small>
+                                This is an intermediate calculation. Hypothetical Swiss
+                                income tax has not yet been deducted, so this is not
+                                the employee's final protected net home pay.
+                                </small>
+                            </em>
+                        </p>
 
 
 
+                        <h3>Hypothetical Swiss Income Tax</h3>
+
+                        <p>
+                            Provisional annual Swiss income tax based on
+                            the employee's salary and bonus.
+                        </p>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tax Component</th>
+                                    <th>Annual Amount (CHF)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Federal Taxable Income</strong></td>
+                                    <td>
+                                        <strong> CHF {{ results.hypothetical_swiss_tax.federal_taxable_income_chf|floatformat:2|intcomma }} </strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Federal Income Tax</td>
+                                    <td>CHF {{ results.hypothetical_swiss_tax.federal_tax_chf|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Zurich Taxable Income</strong></td>
+                                    <td>
+                                        <strong> CHF {{ results.hypothetical_swiss_tax.zurich_taxable_income_chf|floatformat:2|intcomma }} </strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Zurich Cantonal Tax</td>
+                                    <td>CHF {{ results.hypothetical_swiss_tax.cantonal_tax_chf|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Zurich Municipal Tax</td>
+                                    <td>CHF {{ results.hypothetical_swiss_tax.municipal_tax_chf|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Personal Tax</td>
+                                    <td>CHF {{ results.hypothetical_swiss_tax.personal_tax_chf|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Swiss Income Tax</strong></td>
+                                    <td>
+                                        <strong>CHF {{ results.hypothetical_swiss_tax.total_tax_chf|floatformat:2 }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Equivalent in GBP</strong></td>
+                                    <td>
+                                        <strong>£{{ results.hypothetical_swiss_tax.total_tax_gbp|floatformat:2 }}</strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p>
+                            <em>
+                                <small>
+                                    Provisional hypothetical Swiss income tax for tax equalisation.
+                                    Deduction assumptions require verification.
+                                    This is not an additional employer expense.
+                                </small>
+                            </em>
+                        </p>
+
+                        <details class="source-details">
+                            <summary>Swiss Income Tax Methodology and Sources</summary>
+                            <div class="source-details-content">
+
+                        <p>
+                            Hypothetical Swiss income tax is estimated for a single
+                            employee living in Zurich, Switzerland, using the
+                            employee's annual salary and bonus.
+                        </p>
+
+                        <p>
+                            The estimate includes:
+                        </p>
+
+                        <ul>
+                            <li>
+                                <strong>Direct federal tax:</strong>
+                                calculated using progressive Swiss federal income
+                                tax brackets.
+                            </li>
+
+                            <li>
+                                <strong>Zurich cantonal tax:</strong>
+                                calculated using the assumed Zurich cantonal
+                                tax schedule and multiplier of 95%.
+                            </li>
+
+                            <li>
+                                <strong>Zurich municipal tax:</strong>
+                                calculated using the assumed City of Zurich
+                                municipal multiplier of 119%.
+                            </li>
+
+                            <li>
+                                <strong>Personal tax:</strong>
+                                an assumed annual charge of CHF 24.
+                            </li>
+                        </ul>
+
+                        <p>
+                            Swiss employee AHV/IV/EO and unemployment insurance
+                            contributions are calculated separately and deducted
+                            when estimating taxable income.
+                        </p>
+
+                        <p>
+                            <strong>Important assumption:</strong>
+                            The model uses simplified employment expense deductions.
+                            It does not represent a complete Swiss tax return.
+                            Additional deductions, individual circumstances and
+                            official rounding rules may affect the final tax amount.
+                        </p>
+
+                        <p>
+                            <strong>Employment expense deduction:</strong>
+                            The model applies CHF 4,000 annually as a general
+                            employment expense allowance. The published 2026
+                            Zurich tax parameters specify 3% of qualifying
+                            net salary, subject to a CHF 2,000 minimum and
+                            CHF 4,000 maximum.
+
+                            Official 2026 source:
+                            <a href="https://www.zh.ch/de/steuern-finanzen/steuern/treuhaender/steuerbuch/steuerbuch-definition/zstb-26-1.html"
+                            target="_blank" rel="noopener noreferrer">
+                                Canton of Zurich - Employment Expense Rules 2026
+                            </a>
+                        </p>
+
+                        <p>
+                            <small>
+                                This confirms the general expense allowance,
+                                not the completeness of the employee's taxable
+                                income calculation. Other deductions remain
+                                outside the simplified estimate.
+                            </small>
+                        </p>
+
+                        <p>
+                            <strong>Official Swiss tax sources:</strong>
+                        </p>
+
+                        <ul>
+                            <li>
+                                <a href="https://www.estv.admin.ch/"
+                                target="_blank" rel="noopener noreferrer">
+                                    Swiss Federal Tax Administration (FTA)
+                                </a>
+                                - federal income tax guidance and tax calculators.
+                            </li>
+
+                            <li>
+                                <a href="https://www.fedlex.admin.ch/eli/cc/1991/1184_1184_1184/de#part_2/tit_2/chap_5/sec_1"
+                                target="_blank" rel="noopener noreferrer">
+                                    Federal Law on Direct Federal Tax
+                                </a>
+                                - direct federal income tax law.
+                            </li>
+
+                            <li>
+                                <a href="https://www.stadt-zuerich.ch/de/lebenslagen/steuern/natuerliche-personen/steuerberechnung.html"
+                                target="_blank" rel="noopener noreferrer">
+                                    Tax Calculation and Tax Rates - City of Zurich
+                                </a>
+                                - cantonal and municipal tax information and tax rates.
+                            </li>
+
+                        </ul>
 
 
+                        
+                        </details>
 
+                        <h3>Provisional Protected Net Home Pay in GBP</h3>
+
+                        <p>
+                            This is the employee's estimated annual home pay
+                            after hypothetical Swiss social security and income tax.
+                        </p>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Annual Amount (GBP)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Gross Home Pay (Salary + Bonus)</td>
+                                    <td>
+                                        £{{ results.protected_net_home_pay.gross_home_pay_gbp|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Less: Hypothetical Swiss Social Security</td>
+                                    <td>
+                                        -£{{ results.protected_net_home_pay.hypothetical_social_security_gbp|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Less: Hypothetical Swiss Income Tax</td>
+                                    <td>
+                                        -£{{ results.protected_net_home_pay.hypothetical_swiss_income_tax_gbp|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>Protected Net Home Pay</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.protected_net_home_pay.protected_net_home_pay_gbp|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p>
+                            <em>
+                                <small>
+                                This is a provisional tax-equalisation calculation.
+                                It represents the employee's estimated protected annual
+                                net home pay, excluding separate assignment benefits.
+                                Swiss tax assumptions require verification.
+                                </small>
+                            </em>
+                        </p>
+                        
+                        <h3>UK Income Tax Gross-Up</h3>
+
+                        <p>
+                            UK income tax is calculated iteratively because
+                            employer-paid UK tax is itself taxable.
+                        </p>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Calculation</th>
+                                    <th scope="col">Year 1</th>
+                                    <th scope="col">Year 2</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td>1. Gross Home Pay (Salary + Bonus)</td>
+                                    <td>
+                                        £{{ results.home_pay.total_home_pay_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>
+                                        £{{ results.home_pay.total_home_pay_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+
+                               
+                                <tr>
+                                    <td>Less: Hypothetical Swiss Social Security</td>
+                                    <td>
+                                        -£{{ results.year_1_final_cost.applied_hypothetical_swiss_social_security_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>
+                                        -£{{ results.year_2_final_cost.applied_hypothetical_swiss_social_security_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+
+
+                                <tr>
+                                    <td>Less: Hypothetical Swiss Income Tax</td>
+                                    <td>
+                                        -£{{ results.hypothetical_swiss_tax.total_tax_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>
+                                        -£{{ results.hypothetical_swiss_tax.total_tax_gbp|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>2. Protected Net Home Pay</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.protected_net_home_pay.protected_net_home_pay_gbp|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.protected_net_home_pay.protected_net_home_pay_gbp|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>3. Add: Taxable Assignment Benefits</td>
+                                    <td>
+                                        £{{ results.year_1_total_taxable_benefits.total_taxable_benefits|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_total_taxable_benefits.total_taxable_benefits|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>Net Assignment Pay Before Gross-Up</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_1_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_2_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>4. Employer-Paid UK Income Tax (Grossed Up)</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_1_uk_tax_gross_up|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_2_uk_tax_gross_up|floatformat:2|intcomma }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- <table>
+                            <thead>
+                                <tr>
+                                    <th>Calculation</th>
+                                    <th>Year 1</th>
+                                    <th>Year 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Taxable Income Before Gross-Up</td>
+                                    <td>£{{ results.year_1_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
+                                    <td>£{{ results.year_2_uk_tax_inputs.taxable_income_before_gross_up|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Employer-Paid UK Income Tax (Grossed Up)</td>
+                                    <td><strong>£{{ results.year_1_uk_tax_gross_up|floatformat:2 }}</strong></td>
+                                    <td><strong>£{{ results.year_2_uk_tax_gross_up|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table> -->
+
+                        <p>
+                            <em>
+                                <small>
+                                    Provisional estimate using the assignment's specified
+                                    gross-up methodology.
+                                </small>
+                            </em>
+                        </p>
+
+                        
+                        <details class="source-details">
+                            <summary>UK Income Tax Rules and Sources</summary>
+                            <div class="source-details-content">
+
+                        <p>
+                            The estimate uses the England income tax rules for
+                            the 2026/27 tax year, applied to both assignment years
+                            as a modelling assumption.
+                        </p>
+
+                        <ul>
+                            <li>
+                                Personal allowance: £12,570, reduced by £1 for
+                                every £2 of adjusted net income above £100,000.
+                            </li>
+                            <li>
+                                Basic rate: 20% on the first £37,700 of taxable income.
+                            </li>
+                            <li>
+                                Higher rate: 40% on taxable income above the basic-rate
+                                band, up to the additional-rate threshold.
+                            </li>
+                            <li>
+                                Additional rate: 45% on taxable income above £125,140.
+                            </li>
+                            <li>
+                                Employer-paid UK income tax is grossed up iteratively
+                                because the employer's tax payment is treated as
+                                additional taxable income under the model.
+                            </li>
+                        </ul>
+
+                        <p>
+                            <strong>Official sources:</strong>
+                            <a href="https://www.gov.uk/income-tax-rates"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK- Income Tax rates and allowances
+                            </a>
+                            |
+                            <a href="https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Rates and thresholds for employers 2026/27
+                            </a>
+                        </p>
+
+                        <p>
+                            <small>
+                                The second assignment year uses the same tax parameters
+                                for comparison. Actual 2027/28 rules should be checked
+                                when available. The gross-up follows the methodology
+                                specified in the assignment brief.
+                            </small>
+                        </p>
+                        <p>
+                            <strong>Tax Equalisation Methodology:</strong>
+                            The calculation follows the four-step approach described
+                            by Andrew Bailey: estimate hypothetical home-country tax,
+                            deduct it from standard pay, add assignment allowances,
+                            and calculate host-country tax on the resulting assignment pay.
+                            The model also accounts for employer-paid UK tax through
+                            an iterative gross-up calculation.
+                        </p>
+
+                        <p>
+                            <strong>Methodology reference:</strong>
+                            <a
+                                href="https://www.internationalhradviser.com/storage/downloads/What%20Is%20Tax%20Equalisation%20BDO.pdf"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Andrew Bailey - What Is Tax Equalisation?,
+                                International HR Adviser, pp. 25–26
+                            </a>
+                        </p>
+
+                        </details>
+
+                        
+                            <h3> Applicable Social Security System</h3>
+
+                            <div class="source-details-content">
+                                <div class="social-security-explanation">
+
+                                    <p>
+                                        <strong>Applicable Country:</strong> Switzerland
+                                    </p>
+
+                                    <p>
+                                        <strong>Reason:</strong>
+                                        Under the UK-Switzerland social security coordination
+                                        arrangements, an eligible employee posted to the UK
+                                        for up to 24 months can generally remain covered by
+                                        Swiss social security.
+                                    </p>
+
+                                    <p>
+                                        <strong>Certificate Requirement:</strong>
+                                        The employer must arrange the appropriate Swiss
+                                        certificate of coverage to demonstrate that the
+                                        employee remains insured in Switzerland.
+                                    </p>
+
+                                    <p>
+                                        <strong>Employer Contribution Treatment:</strong>
+                                        Swiss employer AHV/IV/EO and unemployment insurance
+                                        (ALV) contributions are included in this estimate.
+                                        UK employer National Insurance is assumed to be £0
+                                        while valid Swiss coverage applies.
+                                    </p>
+
+                                    <p>
+                                        <strong>Important:</strong>
+                                        This deduction assumes the employee qualifies
+                                        for temporary posting rules and obtains the
+                                        required certificate of coverage. Otherwise,
+                                        UK National Insurance obligations may need
+                                        to be reassessed.
+                                    </p>
+
+                                    <p>
+                                        <strong>Official Source:</strong>
+                                        <a
+                                            href="https://www.gov.uk/guidance/social-security-contributions-for-workers-coming-to-the-uk-from-the-eea-or-switzerland"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            GOV.UK - Social security contributions for
+                                            workers coming to the UK from Switzerland
+                                        </a>
+                                    </p>
+
+                                </div>
+                            </div>
+
+                        <h3>Employer Social Security Contributions</h3>
+
+                        <p>
+                            This estimate assumes the employee remains covered by
+                            Swiss social security during the temporary UK assignment,
+                            subject to the applicable posting conditions and
+                            certificate of coverage.
+                        </p>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Contribution</th>
+                                    <th>Annual Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Swiss Employer AHV/IV/EO</td>
+                                    <td>
+                                        CHF {{ results.swiss_employer_social_security.ahv_iv_eo_chf|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Swiss Employer ALV</td>
+                                    <td>
+                                        CHF {{ results.swiss_employer_social_security.alv_chf|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Total Swiss Employer Contributions</td>
+                                    <td>
+                                        CHF {{ results.swiss_employer_social_security.total_chf|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Annual Employer Contributions (GBP)</strong></td>
+                                    <td>
+                                        <strong>£{{ results.swiss_employer_social_security_gbp|floatformat:2 }}</strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p>
+                            <em>
+                                <small>
+                                This estimate excludes other potentially applicable Swiss employer
+                                contributions and insurance costs.
+                                </small>
+                            </em> 
+                        </p>
+
+                                        
+                        <h3>UK Relocation Expense Relief</h3>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Year 1</th>
+                                    <th>Year 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Qualifying Relocation Expenses </td>
+                                    <td>
+                                        £{{ results.year_1_relocation_relief.total_qualifying_costs|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_relocation_relief.total_qualifying_costs|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Potentially Exempt Expenses</td>
+                                    <td>
+                                        £{{ results.year_1_relocation_relief.exempt_amount|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_relocation_relief.exempt_amount|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Potentially Taxable Expenses</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_1_relocation_relief.potentially_taxable_amount|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_2_relocation_relief.potentially_taxable_amount|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p>
+                            <em>
+                                <small>
+                                    Assumes the moving and temporary accommodation
+                                    expenses qualify for UK relocation relief.
+                                    The combined exemption is limited to £8,000.
+                                    Actual eligibility must be verified.
+                                </small>
+                            </em>
+                        </p>
+                        
+                        <details class="source-details">
+                            <summary>Relocation Relief - HMRC Rules</summary>
+                            <div class="source-details-content">
+
+                        <p>
+                            HMRC allows qualifying relocation expenses and benefits
+                            to be exempt from tax up to a combined limit of £8,000,
+                            subject to eligibility conditions.
+                        </p>
+
+                        <p>
+                            For this assignment, the employer pays £6,000 in moving
+                            costs and £4,000 for temporary accommodation.
+                            The model assumes both qualify for relocation relief.
+                        </p>
+
+                        <ul>
+                            <li>Total relocation expenses: £10,000.</li>
+                            <li>Assumed tax-exempt amount: £8,000.</li>
+                            <li>Potentially taxable excess: £2,000.</li>
+                        </ul>
+
+                        <p>
+                            The CHF 5,000 cash relocation allowance is treated
+                            separately as taxable cash.
+                        </p>
+
+                        <p>
+                            <strong>Official HMRC source:</strong>
+                            <a href="https://www.gov.uk/expenses-and-benefits-relocation"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Expenses and benefits: relocation
+                            </a>
+                        </p>
+
+                        <p>
+                            <small>
+                                The exemption is conditional. The employer must
+                                verify that the expenses qualify and satisfy
+                                the applicable HMRC requirements.
+                            </small>
+                        </p>
+
+                        
+                        </details>
+
+                        <h3>Total UK Taxable Benefits</h3>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Year 1</th>
+                                    <th>Year 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Taxable Cash Relocation Allowance</td>
+                                    <td>
+                                        £{{ results.year_1_taxable_benefits.taxable_cash|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_taxable_benefits.taxable_cash|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Potentially Taxable Relocation Expenses</td>
+                                    <td>
+                                        £{{ results.year_1_taxable_benefits.taxable_relocation_expenses|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_taxable_benefits.taxable_relocation_expenses|floatformat:2 }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Taxable Accommodation</td>
+                                    <td>
+                                        £{{ results.year_1_taxable_benefits.housing_employer_cost|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        £{{ results.year_2_taxable_benefits.housing_employer_cost|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Assumed UK Taxable Benefits</strong></td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_1_total_taxable_benefits.total_taxable_benefits|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            £{{ results.year_2_total_taxable_benefits.total_taxable_benefits|floatformat:2 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+
+                        
+                        
+                        <details class="source-details">
+                            <summary>Accommodation Benefit - HMRC Rules</summary>
+                            <div class="source-details-content">
+
+                        <p>
+                            <strong>Accommodation Tax Assumption:</strong>
+                            Employer-provided living accommodation can create
+                            a taxable benefit in kind. Its taxable value depends
+                            on the accommodation arrangement, relevant costs,
+                            employee contributions and any applicable exemptions.
+                        </p>
+                        <p>
+                            The employer-provided accommodation is assumed to be
+                            taxable at its annual rental cost. The estimate does
+                            not apply temporary-workplace accommodation relief
+                            because the assignment brief does not provide sufficient
+                            information to establish eligibility.
+                        </p>
+
+
+                        <p>
+                            <strong>This is a modelling assumption, not a confirmed
+                            HMRC valuation.</strong> A different taxable value would
+                            change the UK income tax gross-up and total employer cost.
+                        </p>
+
+                        <p>
+                            <strong>Official HMRC source:</strong>
+                            <a href="https://www.gov.uk/expenses-and-benefits-accommodation"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Expenses and benefits: accommodation
+                            </a>
+                        </p>
+
+                        
+                        </details>
+
+                    </div>
+                </details>
 
             {% endif %}
             
         </section>
         
-        <section id="immigration">
+        <section id="immigration" class="tab-content" role="tabpanel" aria-labelledby="immigration-tab" hidden>
             <h2>Immigration Requirements</h2>
-
-            <p>
-                Immigration guidance for a Swiss national assigned from Zurich to London for two years.
-            </p>
 
             <h3>Employee Profile</h3>
 
             <table>
                 <tbody>
-                    <tr>
+                   <tr>
                         <th>Nationality</th>
-                        <td>Swiss</td>
+                        <td>
+                            {% for value, label in form.nationality.field.choices %}
+                                {% if value == form.nationality.value %}
+                                    {{ label }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
                     </tr>
                     <tr>
                         <th>Home Location</th>
-                        <td>Zurich, Switzerland</td>
+                        <td>
+                            {% for value, label in form.home_city.field.choices %}
+                                {% if value == form.home_city.value %}{{ label }}{% endif %}
+                            {% endfor %},
+                            {% for value, label in form.home_country.field.choices %}
+                                {% if value == form.home_country.value %}{{ label }}{% endif %}
+                            {% endfor %}
+                        </td>
                     </tr>
                     <tr>
                         <th>Host Location</th>
-                        <td>London, United Kingdom</td>
+                        <td>
+                            {% for value, label in form.host_city.field.choices %}
+                                {% if value == form.host_city.value %}{{ label }}{% endif %}
+                            {% endfor %},
+                            {% for value, label in form.host_country.field.choices %}
+                                {% if value == form.host_country.value %}{{ label }}{% endif %}
+                            {% endfor %}
+                        </td>
                     </tr>
                     <tr>
                         <th>Assignment Duration</th>
-                        <td>6 April 2026 - 5 April 2028</td>
+                        <td>
+                            {{ form.cleaned_data.start_date|date:"d/m/Y" }}
+                            -
+                            {{ form.cleaned_data.end_date|date:"d/m/Y" }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Years with Employer</th>
+                        <td>{{ form.years_employed.value }}</td>
                     </tr>
                     <tr>
                         <th>Employment Arrangement</th>
@@ -1245,491 +1488,438 @@
                 </tbody>
             </table>
 
-            <h3>Work Visa and Sponsorship</h3>
-            <p>
-                <strong>Work authorisation:</strong>
-                A Swiss national generally requires appropriate UK
-                immigration permission to undertake a two-year
-                employment assignment in the United Kingdom.
-            </p>
+            <details class="immigration-details">
+                <summary>Work Visa and Sponsorship</summary>
+                <div class="immigration-details-content">
+                    
+                    <p>
+                        <strong>Work authorisation:</strong>
+                        A Swiss national requires appropriate <strong>UK VISA</strong> to undertake a two-year
+                        employment assignment in the United Kingdom.
+                    </p>
 
-            <p>
-                <strong>Potential visa route:</strong>
-                Global Business Mobility - Senior or Specialist Worker.
-                This route allows eligible employees to transfer
-                to a linked UK business.
-            </p>
+                    <p>
+                        <strong>Potential visa route:</strong>
+                        Global Business Mobility - Senior or Specialist Worker.
+                        This route allows eligible employees to transfer
+                        to a linked UK business.
+                    </p>
 
-            <h4>Eligibility Requirements</h4>
+                    <h4>Eligibility Requirements</h4>
 
-            <ul>
-                <li>
-                    The UK business must hold the appropriate
-                    Home Office sponsor licence.
-                </li>
-                <li>
-                    The employee must receive a valid
-                    Certificate of Sponsorship.
-                </li>
-                <li>
-                    The proposed UK role must have an eligible
-                    occupation code.
-                </li>
-                <li>
-                    Salary must meet the applicable threshold:
-                    at least £52,500 annually or the
-                    occupation's going rate, whichever is higher.
-                </li>
-                <li>
-                    If the employee is earning less than £73,900 a year, 
-                    they must have worked for their employer outside the UK for at least 12 months.
-                </li>
-                <li>
-                    The employee must meet the overseas employment requirements.
-                </li>
-                
-            </ul>
+                    <ul>
+                        <li>
+                            The UK business must hold the appropriate
+                            Home Office sponsor licence.
+                        </li>
+                        <li>
+                            The employee must receive a valid
+                            Certificate of Sponsorship.
+                        </li>
+                        <li>
+                            The proposed UK role must have an eligible
+                            occupation code.
+                        </li>
+                        <li>
+                            Salary must meet the applicable threshold:
+                            at least £52,500 annually or the
+                            occupation's going rate, whichever is higher.
+                        </li>
+                        <li>
+                            If the employee is earning less than £73,900 a year, 
+                            they must have worked for their employer outside the UK for at least 12 months.
+                        </li>
+                        <li>
+                            The employee must meet the overseas employment requirements.
+                        </li>
+                        
+                    </ul>
 
-            <h4>Assessment of This Assignment</h4>
+                    <h4>Assessment for this test case</h4>
 
-            <p>
-                The employee has three years of prior employment
-                and annual salary and bonus of CHF 170,000 (~GBP 154545.45).
-                These facts support potential eligibility.
-            </p>
+                    <p>
+                        The employee has three years of prior employment
+                        and annual salary and bonus of CHF 170,000 (~GBP 154545.45).
+                        These facts support potential eligibility.
 
-            <p>
-                However, the employee's occupation code,
-                qualifying sponsored salary, and the UK
-                subsidiary's sponsorship status must still
-                be verified before eligibility can be confirmed.
-            </p>
+                        However, the employee's occupation code,
+                        qualifying sponsored salary, and the UK
+                        subsidiary's sponsorship status must still
+                        be verified before eligibility can be confirmed.
+                    </p>
 
-            <p>
-                <strong>Official guidance:</strong>
-                <a
-                    href="https://www.gov.uk/senior-specialist-worker-visa"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    GOV.UK - Senior or Specialist Worker
-                </a>
-            </p>
+                    <p>
+                        <strong>Official guidance:</strong>
+                        <a
+                            href="https://www.gov.uk/senior-specialist-worker-visa"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            GOV.UK - Senior or Specialist Worker
+                        </a>
+                    </p>
 
-            <h3>Business Visitor Rules</h3>
+                    <details class="immigration-details nested-details">
+                        <summary>Business Visit Rules</summary>
+                        <div class="immigration-details-content">
 
-            <p>
-                <strong>Business visitor status:</strong>
-                Swiss nationals can generally visit the UK for
-                permitted short-term business activities without
-                obtaining a Standard Visitor visa, provided they
-                meet the relevant entry requirements.
-            </p>
+                            <p>
+                                <strong>Business visit status:</strong>
+                                Swiss nationals can generally visit the UK for
+                                permitted short-term business activities without
+                                obtaining a Standard Visitor visa, using an ETA.
+                            </p>
 
-            <h4>Electronic Travel Authorisation (ETA)</h4>
+                            <h4>Electronic Travel Authorisation (ETA)</h4>
+                            <p>
+                                Citizens from Switzerland require an electronic travel authorisation (ETA) for
+                                short visits (up to 6 months) to the UK unless exempt.
 
-            <p>
-                Citizens from Switzerland require an electronic travel authorisation (ETA) for
-                short visits (up to 6 months) to the UK unless exempt.
+                                However, an employee who already holds a valid
+                                UK work visa does not need a separate ETA.
+                                An ETA is not a substitute for a work visa.
+                            </p>
 
-                However, an employee who already holds a valid
-                UK work visa does not need a separate ETA.
-                An ETA is not a substitute for a work visa.
-            </p>
+                            <h4>Permitted Business Activities</h4>
+                            <ul>
+                                <li>Attending business meetings and conferences.</li>
+                                <li>Negotiating and signing contracts.</li>
+                                <li>Attending interviews and seminars.</li>
+                                <li>Conducting permitted site visits and inspections.</li>
+                            </ul>
 
-            <h4>Permitted Business Activities</h4>
+                            <h4>Restrictions</h4>
+                            <ul>
+                                <li>
+                                    Visitors generally cannot undertake ordinary paid or unpaid employment for a UK company.
+                                </li>
+                                <li>
+                                    Visitors cannot fill a position within a
+                                    UK organisation, unless a specific permitted
+                                    activity exception applies.
+                                </li>
+                                <li>
+                                    Standard Visitors can normally stay for up to six months per visit.
+                                </li>
+                                <li>
+                                    Visitors cannot use frequent or successive visits to live in the UK.
+                                </li>
+                            </ul>
 
-            <ul>
-                <li>Attending business meetings and conferences.</li>
-                <li>Negotiating and signing contracts.</li>
-                <li>Attending interviews and seminars.</li>
-                <li>Conducting permitted site visits and inspections.</li>
-            </ul>
+                            <p>
+                                <strong>Official sources:</strong>
+                            </p>
 
-            <h4>Restrictions</h4>
+                            <ul>
+                                <li>
+                                    <a href="https://www.gov.uk/standard-visitor/visit-on-business"
+                                    target="_blank" rel="noopener noreferrer">
+                                        GOV.UK - Visit on business
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="https://www.gov.uk/eta/what-you-can-cannot-do"
+                                    target="_blank" rel="noopener noreferrer">
+                                        GOV.UK - ETA permitted activities
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
 
-            <ul>
-                <li>
-                    Visitors generally cannot undertake ordinary paid or unpaid employment for a UK company.
-                </li>
-                <li>
-                    Visitors cannot fill a position within a
-                    UK organisation, unless a specific permitted
-                    activity exception applies.
-                </li>
-                <li>
-                    Standard Visitors can normally stay for up to six months per visit.
-                </li>
-                <li>
-                    Visitors cannot use frequent or successive visits to live in the UK.
-                </li>
-            </ul>
+                </div>
+            </details>
 
+            <details class="immigration-details">
+                <summary>Passport and Entry Requirements</summary>
+                <div class="immigration-details-content">
+                    <p>
+                        <strong>Passport:</strong>
+                        The Swiss employee should hold a valid passport
+                        for travel to the UK. The passport should remain
+                        valid throughout the intended stay.
+                    </p>
 
-            <h4>Assessment of This Assignment</h4>
+                    <h4>Before Travelling</h4>
 
-            <p>
-                <strong>Conclusion: Not suitable for assignment, but Suitable for short-term visit before Assignment.</strong>
-                <p>
-                The proposed assignment involves two years of
-                employment-related activity at a UK subsidiary,
-                with UK payroll arrangements.
-                </p>
-            </p>
+                    <ul>
+                        <li>
+                            Obtain approval for the appropriate UK work visa
+                            before starting the assignment.
+                        </li>
+                        <li>
+                            Complete the identity verification process
+                            required for the visa application.
+                        </li>
+                        <li>
+                            Check the UK Visas and Immigration (UKVI)
+                            account and confirm that the eVisa is valid and details
+                            are accurate. If you do not already have a UKVI account, 
+                            you need to set up access to your eVisa.
+                        </li>
+                        <li>
+                            Ensure the current passport is linked to
+                            the UKVI account.
+                        </li>
+                    </ul>
 
-            <p>
-                This goes beyond ordinary permitted business
-                visitor activities. The employee should obtain
-                appropriate UK work authorisation before
-                beginning the assignment.
-            </p>
+                    <h4>Entry into the UK</h4>
 
-            <p>
-                However, Swiss nationals could apply for an Electronic
-                Travel Authorisation (ETA) for short visits
-                unless an exemption applies and this can be used for business visits happening before the assignment. 
-                But note that an ETA does not
-                provide permission for the two-year assignment.
-            </p>
+                    <p>
+                        The employee should travel with their valid
+                        passport and ensure that their immigration
+                        permission is available through their UKVI account.
+                    </p>
 
-            <p>
-                <strong>Official sources:</strong>
-            </p>
+                    <p>
+                        Swiss nationals with eligible biometric passports
+                        and valid immigration status can use
+                        automated ePassport gates at the UK border on arrival.
+                    </p>
 
-            <ul>
-                <li>
-                    <a href="https://www.gov.uk/standard-visitor/visit-on-business"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Visit on business
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/guidance/immigration-rules/immigration-rules-appendix-v-visitor"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Immigration Rules Appendix V
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/eta/what-you-can-cannot-do"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - ETA permitted activities
-                    </a>
-                </li>
-            </ul>
+                    <h4>Official Sources</h4>
 
+                    <ul>
+                        <li>
+                            <a href="https://www.gov.uk/guidance/visiting-the-uk-as-an-eu-eea-or-swiss-citizen"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Entry requirements for Swiss citizens
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/evisa/travel-with-evisa"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Travelling with an eVisa
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </details>
 
-            <h3>Passport and Entry Requirements</h3>
+            <details class="immigration-details">
+                <summary>Employer Obligations</summary>
+                <div class="immigration-details-content">
+                    <p>
+                        The UK subsidiary must meet Home Office
+                        sponsorship requirements before and during
+                        the employee's assignment.
+                    </p>
 
-            <p>
-                <strong>Passport:</strong>
-                The Swiss employee should hold a valid passport
-                for travel to the UK. The passport should remain
-                valid throughout the intended stay.
-            </p>
+                    <h4>Before the Assignment</h4>
+                    <ul>
+                        <li>
+                            Hold a valid sponsor licence covering
+                            the relevant Global Business Mobility route.
+                        </li>
+                        <li>
+                            Confirm that the Swiss company and UK
+                            subsidiary meet the qualifying business
+                            relationship requirements.
+                        </li>
+                        <li>
+                            Check the employee's occupation code,
+                            eligible role, salary and visa requirements.
+                        </li>
+                        <li>
+                            Assign a valid Certificate of Sponsorship
+                            (CoS) through the sponsorship system.
+                        </li>
+                        <li>
+                            Pay the applicable sponsorship fees
+                            and any Immigration Skills Charge.
+                        </li>
+                        <li>
+                            Complete the required right-to-work check
+                            before the employee starts working.
+                        </li>
+                    </ul>
 
-            <h4>Before Travelling</h4>
+                    <h4>During the Assignment</h4>
+                    <ul>
+                        <li>
+                            Maintain accurate employee records,
+                            including contact details and evidence
+                            of immigration permission.
+                        </li>
+                        <li>
+                            Monitor the employee's attendance and
+                            compliance with their sponsored role.
+                        </li>
+                        <li>
+                            Report relevant changes, such as
+                            unauthorised absences, changes to
+                            employment, or early termination,
+                            within the applicable deadlines.
+                        </li>
+                        <li>
+                            Keep the required sponsorship documents
+                            and cooperate with Home Office
+                            compliance checks.
+                        </li>
+                    </ul>
 
-            <ul>
-                <li>
-                    Obtain approval for the appropriate UK work visa
-                    before starting the assignment.
-                </li>
-                <li>
-                    Complete the identity verification process
-                    required for the visa application.
-                </li>
-                <li>
-                    Check the UK Visas and Immigration (UKVI)
-                    account and confirm that the eVisa is valid and details
-                    are accurate. If you do not already have a UKVI account, 
-                    you need to set up access to your eVisa.
-                </li>
-                <li>
-                    Ensure the current passport is linked to
-                    the UKVI account.
-                </li>
-            </ul>
+                    <h4>Official Sources</h4>
 
-            <h4>Entry into the UK</h4>
+                    <ul>
+                        <li>
+                            <a href="https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Certificates of Sponsorship
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/government/publications/workers-and-temporary-workers-guidance-for-sponsors-part-3-sponsor-duties-and-compliance"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Sponsor Duties and Compliance
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/government/publications/keep-records-for-sponsorship-appendix-d"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Sponsor Record-Keeping Duties
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </details>
 
-            <p>
-                The employee should travel with their valid
-                passport and ensure that their immigration
-                permission is available through their UKVI account.
-            </p>
+            <details class="immigration-details">
+                <summary>Application Timeline and Costs</summary>
+                <div class="immigration-details-content">
+                    <p>
+                        The following estimates are based on the
+                        Senior or Specialist Worker visa (Global Business Mobility)
+                        Worker route for a two-year assignment.
+                    </p>
 
-            <p>
-                Swiss nationals with eligible biometric passports
-                and valid immigration status can use
-                automated ePassport gates at the UK border on arrival.
-            </p>
+                    <h4>Estimated Immigration Costs</h4>
 
-            <h4>Official Sources</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cost Item</th>
+                                <th>Estimated Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Visa Application Fee</td>
+                                <td>£819</td>
+                            </tr>
+                            <tr>
+                                <td>Immigration Health Surcharge (2 years)</td>
+                                <td>£2,070</td>
+                            </tr>
+                            <tr>
+                                <td>Money to Support Yourself - Proof Needed to apply for Visa</td>
+                                <td>£1,270</td>
+                            </tr>
+                            <tr>
+                                <td>Certificate of Sponsorship</td>
+                                <td>£525</td>
+                            </tr>
+                            <tr>
+                                <td>Immigration Skills Charge - Small Sponsor</td>
+                                <td>£960, if applicable</td>
+                            </tr>
+                            <tr>
+                                <td>Immigration Skills Charge - Medium/Large Sponsor</td>
+                                <td>£2,640, if applicable</td>
+                            </tr>
+                            <tr>
+                                <td>New Sponsor Licence - Small Sponsor</td>
+                                <td>£611, if required</td>
+                            </tr>
+                            <tr>
+                                <td>New Sponsor Licence - Medium/Large Sponsor</td>
+                                <td>£1,682, if required</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-            <ul>
-                <li>
-                    <a href="https://www.gov.uk/guidance/visiting-the-uk-as-an-eu-eea-or-swiss-citizen"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Entry requirements for Swiss citizens
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/evisa/travel-with-evisa"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Travelling with an eVisa
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/eta/when-not-need-eta"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - When an ETA is not required
-                    </a>
-                </li>
-            </ul>
+                    <p>
+                        <strong>Important:</strong>
+                        Immigration fees are indicative and must be
+                        verified against the current Home Office fee
+                        schedule before an application is submitted.
+                        Sponsor licence fees only apply if a new licence
+                        is required. Immigration Skills Charge amounts
+                        depend on sponsor size and any applicable exemption.
+                    </p>
 
-            
-            <h3>Employer Obligations</h3>
+                    <h4>Application Timeline</h4>
 
-            <p>
-                The UK subsidiary must meet Home Office
-                sponsorship requirements before and during
-                the employee's assignment.
-            </p>
+                    <ol>
+                        <li>
+                            Confirm the UK subsidiary has the appropriate
+                            sponsor licence and eligible corporate relationship.
+                        </li>
+                        <li>
+                            Verify the employee's occupation, salary,
+                            and immigration eligibility.
+                        </li>
+                        <li>
+                            Assign a Certificate of Sponsorship.
+                        </li>
+                        <li>
+                            Submit the online visa application and
+                            complete identity verification.
+                        </li>
+                        <li>
+                            Allow approximately three weeks for a
+                            standard decision on an overseas application.
+                        </li>
+                        <li>
+                            Confirm visa approval before the employee
+                            begins working in the UK.
+                        </li>
+                    </ol>
 
-            <h4>Before the Assignment</h4>
+                    <p>
+                        <strong>Assignment-specific consideration:</strong>
+                        The employee is Swiss, not an EU national.
+                        The employer must check the Immigration Skills
+                        Charge rules rather than automatically assuming
+                        an EU-national exemption applies.
+                    </p>
 
-            <ul>
-                <li>
-                    Hold a valid sponsor licence covering
-                    the relevant Global Business Mobility route.
-                </li>
-                <li>
-                    Confirm that the Swiss company and UK
-                    subsidiary meet the qualifying business
-                    relationship requirements.
-                </li>
-                <li>
-                    Check the employee's occupation code,
-                    eligible role, salary and visa requirements.
-                </li>
-                <li>
-                    Assign a valid Certificate of Sponsorship
-                    (CoS) through the sponsorship system.
-                </li>
-                <li>
-                    Pay the applicable sponsorship fees
-                    and any Immigration Skills Charge.
-                </li>
-                <li>
-                    Complete the required right-to-work check
-                    before the employee starts working.
-                </li>
-            </ul>
+                    <h4>Official Sources</h4>
 
-            <h4>During the Assignment</h4>
-
-            <ul>
-                <li>
-                    Maintain accurate employee records,
-                    including contact details and evidence
-                    of immigration permission.
-                </li>
-                <li>
-                    Monitor the employee's attendance and
-                    compliance with their sponsored role.
-                </li>
-                <li>
-                    Report relevant changes, such as
-                    unauthorised absences, changes to
-                    employment, or early termination,
-                    within the applicable deadlines.
-                </li>
-                <li>
-                    Keep the required sponsorship documents
-                    and cooperate with Home Office
-                    compliance checks.
-                </li>
-            </ul>
-
-            <h4>Assessment of This Assignment</h4>
-
-            <p>
-                The UK subsidiary's sponsor licence status
-                has not been provided. Sponsorship eligibility
-                therefore remains subject to verification.
-            </p>
-
-            <p>
-                The employer must also confirm that the
-                proposed role and salary satisfy the
-                relevant immigration requirements.
-            </p>
-
-            <h4>Official Sources</h4>
-
-            <ul>
-                <li>
-                    <a href="https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Certificates of Sponsorship
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/government/publications/workers-and-temporary-workers-guidance-for-sponsors-part-3-sponsor-duties-and-compliance"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Sponsor Duties and Compliance
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/government/publications/keep-records-for-sponsorship-appendix-d"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Sponsor Record-Keeping Duties
-                    </a>
-                </li>
-            </ul>
-
-            
-            <h3>Application Timeline and Costs</h3>
-
-            <p>
-                The following estimates are based on the
-                Global Business Mobility - Senior or Specialist
-                Worker route for a two-year assignment.
-            </p>
-
-            <h4>Estimated Immigration Costs</h4>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Cost Item</th>
-                        <th>Estimated Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Visa Application Fee</td>
-                        <td>£819</td>
-                    </tr>
-                    <tr>
-                        <td>Immigration Health Surcharge (2 years)</td>
-                        <td>£2,070</td>
-                    </tr>
-                    <tr>
-                        <td>Money to Support Yourself - Proof Needed to apply for Visa</td>
-                        <td>£1,270</td>
-                    </tr>
-                    <tr>
-                        <td>Certificate of Sponsorship</td>
-                        <td>£525</td>
-                    </tr>
-                    <tr>
-                        <td>Immigration Skills Charge - Small Sponsor</td>
-                        <td>£960, if applicable</td>
-                    </tr>
-                    <tr>
-                        <td>Immigration Skills Charge - Medium/Large Sponsor</td>
-                        <td>£2,640, if applicable</td>
-                    </tr>
-                    <tr>
-                        <td>New Sponsor Licence - Small Sponsor</td>
-                        <td>£611, if required</td>
-                    </tr>
-                    <tr>
-                        <td>New Sponsor Licence - Medum/Large Sponsor</td>
-                        <td>£1,682, if required</td>
-                    </tr>
-                </tbody>
-            </table>
-            <p>
-                <strong>Cost assumptions:</strong>
-                Immigration fees are indicative and must be
-                verified against the current Home Office fee
-                schedule before an application is submitted.
-                Sponsor licence fees apply only where a new
-                licence is required. The Immigration Skills
-                Charge may be subject to exemptions.
-            </p>
-
-            <p>
-                <strong>Important:</strong>
-                Sponsor licence fees only apply if a new licence
-                is required. Immigration Skills Charge amounts
-                depend on sponsor size and any applicable exemption.
-                The two sponsor-size amounts are alternatives.
-            </p>
-
-            <h4>Application Timeline</h4>
-
-            <ol>
-                <li>
-                    Confirm the UK subsidiary has the appropriate
-                    sponsor licence and eligible corporate relationship.
-                </li>
-                <li>
-                    Verify the employee's occupation, salary,
-                    and immigration eligibility.
-                </li>
-                <li>
-                    Assign a Certificate of Sponsorship.
-                </li>
-                <li>
-                    Submit the online visa application and
-                    complete identity verification.
-                </li>
-                <li>
-                    Allow approximately three weeks for a
-                    standard decision on an overseas application.
-                </li>
-                <li>
-                    Confirm visa approval before the employee
-                    begins working in the UK.
-                </li>
-            </ol>
-
-            <p>
-                <strong>Assignment-specific consideration:</strong>
-                The employee is Swiss, not an EU national.
-                The employer must check the Immigration Skills
-                Charge rules rather than automatically assuming
-                an EU-national exemption applies.
-            </p>
-
-            <h4>Official Sources</h4>
-
-            <ul>
-                <li>
-                    <a href="https://www.gov.uk/senior-specialist-worker-visa/how-much-it-costs"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Senior or Specialist Worker Visa Costs
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Immigration Skills Charge
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Certificate of Sponsorship Fees
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/uk-visa-sponsorship-employers/apply-for-your-licence"
-                    target="_blank" rel="noopener noreferrer">
-                    GOV.UK - UK visa sponsorship for employers 
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.gov.uk/guidance/visa-processing-times-applications-outside-the-uk"
-                    target="_blank" rel="noopener noreferrer">
-                        GOV.UK - Overseas Visa Processing Times
-                    </a>
-                </li>
-                
-            </ul>
+                    <ul>
+                        <li>
+                            <a href="https://www.gov.uk/senior-specialist-worker-visa/how-much-it-costs"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Senior or Specialist Worker Visa Costs
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Immigration Skills Charge
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Certificate of Sponsorship Fees
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/uk-visa-sponsorship-employers/apply-for-your-licence"
+                            target="_blank" rel="noopener noreferrer">
+                            GOV.UK - UK visa sponsorship for employers 
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://www.gov.uk/guidance/visa-processing-times-applications-outside-the-uk"
+                            target="_blank" rel="noopener noreferrer">
+                                GOV.UK - Overseas Visa Processing Times
+                            </a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </details>
 
             
             <h3>Official Sources</h3>
@@ -1813,5 +2003,28 @@
         </section>
 
     </main>
+    
+    <script>
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll(".tab-button");
+            const sections = document.querySelectorAll(".tab-content");
+
+            sections.forEach(section => {
+                section.hidden = section.id !== tabId;
+            });
+
+            tabs.forEach(tab => {
+                const isActive = tab.getAttribute("aria-controls") === tabId;
+
+                tab.classList.toggle("active", isActive);
+                tab.setAttribute("aria-selected", String(isActive));
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            showTab("cost-estimate");
+        });
+    </script>
+
 </body>
 </html>

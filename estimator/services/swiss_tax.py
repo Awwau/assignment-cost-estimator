@@ -144,23 +144,48 @@ FEDERAL_TAX_BRACKETS_2026 = [
     (None, Decimal("0.1150")),
 ]
 
+FEDERAL_TAX_SCHEDULE_2026 = [
+    # (taxable income threshold, base tax, additional tax per CHF 100)
+    (Decimal("15200"), Decimal("0.00"), Decimal("0.77")),
+    (Decimal("33200"), Decimal("138.60"), Decimal("0.88")),
+    (Decimal("43500"), Decimal("229.20"), Decimal("2.64")),
+    (Decimal("58000"), Decimal("612.00"), Decimal("2.97")),
+    (Decimal("76200"), Decimal("1152.50"), Decimal("5.94")),
+    (Decimal("82100"), Decimal("1502.95"), Decimal("6.60")),
+    (Decimal("108900"), Decimal("3271.75"), Decimal("8.80")),
+    (Decimal("141500"), Decimal("6140.55"), Decimal("11.00")),
+    (Decimal("185100"), Decimal("10936.55"), Decimal("13.20")),
+    (Decimal("793900"), Decimal("91298.15"), Decimal("11.85")),
+    (Decimal("794000"), Decimal("91310.00"), Decimal("11.50")),
+]
 
-def calculate_federal_income_tax(
-    taxable_income,
-    tax_brackets=FEDERAL_TAX_BRACKETS_2026,
-):
+
+def calculate_federal_income_tax(taxable_income):
     """
-    Calculate a provisional federal income tax estimate.
+    Calculate Swiss direct federal income tax using the
+    official 2026 single-person tax schedule.
 
-    Requires verified tax brackets before production use.
+    Base tax amounts and increments are expressed in CHF.
     """
+    taxable_income = Decimal(str(taxable_income))
 
-    return calculate_progressive_tax(
-        taxable_income,
-        tax_brackets,
-    )
+    if taxable_income < 0:
+        raise ValueError("Taxable income cannot be negative.")
 
+    if taxable_income <= Decimal("15200"):
+        return Decimal("0.00")
 
+    for threshold, base_tax, increment_per_100 in reversed(
+        FEDERAL_TAX_SCHEDULE_2026
+    ):
+        if taxable_income >= threshold:
+            additional_income = taxable_income - threshold
+
+            return base_tax + (
+                additional_income / Decimal("100")
+            ) * increment_per_100
+
+    return Decimal("0.00")
 # ============================================================
 # ZURICH CANTONAL AND MUNICIPAL TAX
 # ============================================================

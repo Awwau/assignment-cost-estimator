@@ -22,21 +22,47 @@ def calculate_personal_allowance(income):
     return max(PERSONAL_ALLOWANCE - reduction, Decimal("0"))
 
 
+
 def calculate_uk_income_tax(income):
     income = Decimal(str(income))
+
     if income < 0:
         raise ValueError("Income cannot be negative.")
 
-    allowance = calculate_personal_allowance(income)
-    taxable_income = max(income - allowance, Decimal("0"))
+    personal_allowance = calculate_personal_allowance(income)
 
-    basic_amount = min(taxable_income,BASIC_RATE_LIMIT)
+    taxable_income = max(
+        income - personal_allowance,
+        Decimal("0")
+    )
 
-    higher_amount = min(max(taxable_income - BASIC_RATE_LIMIT, Decimal("0")), ADDITIONAL_RATE_THRESHOLD - BASIC_RATE_LIMIT)
+    basic_amount = min(
+        taxable_income,
+        BASIC_RATE_LIMIT
+    )
 
-    additional_amount = max(taxable_income - ADDITIONAL_RATE_THRESHOLD, Decimal("0"))
+    higher_rate_limit = max(
+        ADDITIONAL_RATE_THRESHOLD
+        - personal_allowance
+        - BASIC_RATE_LIMIT,
+        Decimal("0")
+    )
 
-    tax = (basic_amount * BASIC_RATE + higher_amount * HIGHER_RATE + additional_amount * ADDITIONAL_RATE)
+    higher_amount = min(
+        max(taxable_income - BASIC_RATE_LIMIT, Decimal("0")),
+        higher_rate_limit
+    )
+
+    additional_amount = max(
+        income - ADDITIONAL_RATE_THRESHOLD,
+        Decimal("0")
+    )
+
+    tax = (
+        basic_amount * BASIC_RATE
+        + higher_amount * HIGHER_RATE
+        + additional_amount * ADDITIONAL_RATE
+    )
 
     return tax
 

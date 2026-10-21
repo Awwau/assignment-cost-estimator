@@ -1,0 +1,556 @@
+
+/* ===================================
+   Assignment Cost Estimator
+   =================================== */
+
+:root {
+    --primary: #1e40af;
+    --primary-dark: #172554;
+    --background: #f4f7fb;
+    --surface: #ffffff;
+    --text: #17243b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --success: #047857;
+    --radius: 14px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+/* Header */
+
+header {
+    background: linear-gradient(
+        120deg,
+        var(--primary-dark),
+        var(--primary)
+    );
+    color: white;
+    padding: 38px max(24px, calc((100% - 1200px) / 2));
+}
+
+header h1 {
+    margin: 0 0 6px;
+    font-size: clamp(26px, 3vw, 36px);
+    line-height: 1.2;
+}
+
+header p {
+    margin: 0;
+    color: #dbeafe;
+}
+
+/* Page layout */
+
+main {
+    max-width: 1200px;
+    margin: 28px auto 60px;
+    padding: 0 22px;
+}
+
+nav[aria-label="Estimator sections"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+nav[aria-label="Estimator sections"] a {
+    display: inline-block;
+    padding: 11px 20px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+nav[aria-label="Estimator sections"] a:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+/* Main content sections */
+
+main > section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
+}
+
+h2 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    font-size: 25px;
+}
+
+h3 {
+    margin-top: 38px;
+    margin-bottom: 14px;
+    color: var(--primary-dark);
+    font-size: 19px;
+}
+
+h4 {
+    margin-top: 25px;
+    color: var(--primary-dark);
+    font-size: 16px;
+}
+
+p {
+    margin: 10px 0 16px;
+}
+
+small,
+em {
+    color: var(--muted);
+}
+
+a {
+    color: var(--primary);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Form */
+
+form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+    padding: 26px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+form > div {
+    min-width: 0;
+}
+
+form label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+form input,
+form select,
+form textarea {
+    display: block;
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 12px;
+    background: white;
+    color: var(--text);
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+    outline: 3px solid #bfdbfe;
+    border-color: var(--primary);
+}
+
+form button {
+    grid-column: 1 / -1;
+    justify-self: start;
+    padding: 13px 24px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--primary);
+    color: white;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+form button:hover {
+    background: var(--primary-dark);
+}
+
+/* Tables */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0 28px;
+    font-size: 14px;
+}
+
+thead {
+    background: #eff6ff;
+}
+
+th,
+td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    font-weight: 650;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
+}
+
+table td:nth-child(n+2),
+table th:nth-child(n+2) {
+    overflow-wrap: anywhere;
+}
+
+table th[colspan] {
+    background: #e8eefb;
+    color: var(--primary-dark);
+    font-size: 14px;
+}
+
+table tr:last-child {
+    border-bottom: 0;
+}
+
+/* Supporting information */
+
+ul,
+ol {
+    padding-left: 24px;
+}
+
+li {
+    margin-bottom: 9px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 36px 0;
+}
+
+.social-security-explanation {
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+}
+
+[role="alert"],
+.errorlist {
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.errorlist {
+    padding-left: 18px;
+}
+
+/* Responsive layout */
+
+@media (max-width: 768px) {
+    header {
+        padding: 28px 20px;
+    }
+
+    main {
+        padding: 0 12px;
+        margin-top: 18px;
+    }
+
+    main > section {
+        padding: 20px 15px;
+    }
+
+    form {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    form button {
+        width: 100%;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th,
+    td {
+        padding: 9px 7px;
+    }
+}
+
+
+/* Tab navigation */
+
+.tab-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #dbe3ee;
+}
+
+.tab-button {
+    padding: 13px 22px;
+    background: transparent;
+    color: #64748b;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tab-button:hover {
+    color: #1e40af;
+}
+
+.tab-button.active {
+    color: #1e40af;
+    border-bottom-color: #1e40af;
+}
+
+.tab-button:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+}
+
+.tab-content[hidden] {
+    display: none !important;
+}
+
+/* Assignment cost summary dashboard */
+
+.results-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin: 28px 0 16px;
+}
+
+.summary-card {
+    background: #f5f8ff;
+    border: 1px solid #dce5f5;
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 0;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #53647f;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.summary-card h3 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #193a91;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.summary-note {
+    font-size: 13px;
+    color: #66758c;
+    margin-bottom: 32px;
+}
+
+@media (max-width: 650px) {
+    .results-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card h3 {
+        font-size: 24px;
+    }
+}
+
+/* Expandable detailed calculations */
+
+.calculation-details {
+    margin-top: 32px;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.calculation-details summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: #172b61;
+    background: #f5f7fc;
+}
+
+.calculation-details summary:hover {
+    background: #eaf0ff;
+}
+
+.calculation-details summary::marker {
+    color: #2446b3;
+}
+
+.expand-hint {
+    font-size: 13px;
+    font-weight: 400;
+    color: #64748b;
+}
+
+.calculation-details-content {
+    padding: 24px;
+}
+
+.calculation-details[open] .expand-hint {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .calculation-details summary {
+        padding: 16px;
+        font-size: 16px;
+    }
+
+    .calculation-details-content {
+        padding: 12px;
+    }
+}
+
+/* Grouped assignment form */
+
+.assignment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.form-section {
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 0;
+}
+
+.form-section legend {
+    padding: 0 10px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #172b61;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.form-field label {
+    font-weight: 500;
+}
+
+.form-field input,
+.form-field select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 650px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-section {
+        padding: 14px;
+    }
+}
+/* Immigration expandable sections */
+
+.immigration-details {
+    margin: 18px 0;
+    border: 1px solid #dbe3f0;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.immigration-details > summary {
+    padding: 20px 24px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: #172b61;
+    background: #f5f7fc;
+    list-style-position: inside;
+}
+
+.immigration-details > summary:hover {
+    background: #eaf0ff;
+}
+
+.immigration-details[open] > summary {
+    border-bottom: 1px solid #dbe3f0;
+}
+
+.immigration-details-content {
+    padding: 20px 24px;
+}
+
+.nested-details {
+    margin: 24px 0 8px;
+    border-color: #cbd5e1;
+}
+
+.nested-details > summary {
+    font-size: 16px;
+    background: #eef3fb;
+}
+
+@media (max-width: 650px) {
+    .immigration-details > summary,
+    .immigration-details-content {
+        padding: 16px;
+    }
+}
